@@ -342,12 +342,12 @@ input[type=range]{cursor:pointer}
         <div class="mode-sep"></div>
         <div id="param-btns" style="display:contents"></div>
       </div>
-      <div id="param-lbl-row"><span id="active-plbl">Vonalak száma</span></div>
+      <div id="param-lbl-row"><span id="active-plbl">Frekvencia</span></div>
       <div id="main-sl-row">
-        <span class="sle" id="sl-min">10</span>
-        <input type="range" id="main-sl" min="10" max="200" step="1" value="80">
-        <span class="sle r" id="sl-max">200</span>
-        <span id="sl-val">80</span>
+        <span class="sle" id="sl-min">5</span>
+        <input type="range" id="main-sl" min="5" max="256" step="1" value="120">
+        <span class="sle r" id="sl-max">256</span>
+        <span id="sl-val">120</span>
       </div>
     </div>
 
@@ -435,41 +435,41 @@ input[type=range]{cursor:pointer}
 const S={
   original:null,cropped:null,processed:null,paths:null,
   algo:'squiggle-h',
-  params:{lineCount:80,frequency:50,amplitude:1.0,sampling:1.0,strokeW:0.5},
+  params:{frequency:120, lineCount:25, amplitude:1.5, sampling:1.3, strokeW:0.3},
   tone:{brightness:0,contrast:0,blackPoint:0,whitePoint:255,gamma:1.0},
   paper:{w:210,h:297,margin:10},
   activeParamIdx:0,activeSection:'edit',
 };
 
-// ── PARAM DEFS (Egzakt értékek a SquiggleCam alapján, tizedesjegyekkel) ──
+// ── PARAM DEFS (Sorrend és értékek pont mint az eredeti screenshoton) ──
 const PDEFS={
   'squiggle-h':[
-    {id:'lineCount', label:'Vonalak',       min:10,  max:200, step:1,   def:80},
-    {id:'amplitude', label:'Amplitúdó',     min:0.1, max:5.0, step:0.1, def:1.0},
-    {id:'frequency', label:'Frekvencia',    min:5,   max:256, step:1,   def:50},
-    {id:'sampling',  label:'Mintavétel',    min:0.5, max:2.9, step:0.1, def:1.0},
-    {id:'strokeW',   label:'Vonalvastag',   min:0.1, max:3.0, step:0.1, def:0.4},
+    {id:'frequency', label:'Frekvencia',    min:5,   max:256, step:1,   def:120},
+    {id:'lineCount', label:'Vonalak',       min:10,  max:200, step:1,   def:25},
+    {id:'amplitude', label:'Amplitúdó',     min:0.1, max:5.0, step:0.1, def:1.5},
+    {id:'sampling',  label:'Mintavétel',    min:0.5, max:2.9, step:0.1, def:1.3},
+    {id:'strokeW',   label:'Vonalvastag',   min:0.1, max:3.0, step:0.1, def:0.3},
   ],
   'squiggle-v':[
-    {id:'lineCount', label:'Vonalak',       min:10,  max:200, step:1,   def:80},
-    {id:'amplitude', label:'Amplitúdó',     min:0.1, max:5.0, step:0.1, def:1.0},
-    {id:'frequency', label:'Frekvencia',    min:5,   max:256, step:1,   def:50},
-    {id:'sampling',  label:'Mintavétel',    min:0.5, max:2.9, step:0.1, def:1.0},
-    {id:'strokeW',   label:'Vonalvastag',   min:0.1, max:3.0, step:0.1, def:0.4},
+    {id:'frequency', label:'Frekvencia',    min:5,   max:256, step:1,   def:120},
+    {id:'lineCount', label:'Vonalak',       min:10,  max:200, step:1,   def:25},
+    {id:'amplitude', label:'Amplitúdó',     min:0.1, max:5.0, step:0.1, def:1.5},
+    {id:'sampling',  label:'Mintavétel',    min:0.5, max:2.9, step:0.1, def:1.3},
+    {id:'strokeW',   label:'Vonalvastag',   min:0.1, max:3.0, step:0.1, def:0.3},
   ],
   'squiggle-both':[
-    {id:'lineCount', label:'Vonalak',       min:10,  max:200, step:1,   def:50},
-    {id:'amplitude', label:'Amplitúdó',     min:0.1, max:5.0, step:0.1, def:1.0},
-    {id:'frequency', label:'Frekvencia',    min:5,   max:256, step:1,   def:50},
-    {id:'sampling',  label:'Mintavétel',    min:0.5, max:2.9, step:0.1, def:1.0},
+    {id:'frequency', label:'Frekvencia',    min:5,   max:256, step:1,   def:120},
+    {id:'lineCount', label:'Vonalak',       min:10,  max:200, step:1,   def:25},
+    {id:'amplitude', label:'Amplitúdó',     min:0.1, max:5.0, step:0.1, def:1.5},
+    {id:'sampling',  label:'Mintavétel',    min:0.5, max:2.9, step:0.1, def:1.3},
     {id:'strokeW',   label:'Vonalvastag',   min:0.1, max:3.0, step:0.1, def:0.3},
   ],
   'spiral':[
-    {id:'lineCount', label:'Körök száma',   min:10,  max:200, step:1,   def:100},
-    {id:'amplitude', label:'Amplitúdó',     min:0.1, max:5.0, step:0.1, def:1.0},
-    {id:'frequency', label:'Frekvencia',    min:5,   max:256, step:1,   def:50},
-    {id:'sampling',  label:'Mintavétel',    min:0.5, max:2.9, step:0.1, def:1.0},
-    {id:'strokeW',   label:'Vonalvastag',   min:0.1, max:3.0, step:0.1, def:0.4},
+    {id:'frequency', label:'Frekvencia',    min:5,   max:256, step:1,   def:120},
+    {id:'lineCount', label:'Körök száma',   min:10,  max:200, step:1,   def:50},
+    {id:'amplitude', label:'Amplitúdó',     min:0.1, max:5.0, step:0.1, def:1.5},
+    {id:'sampling',  label:'Mintavétel',    min:0.5, max:2.9, step:0.1, def:1.3},
+    {id:'strokeW',   label:'Vonalvastag',   min:0.1, max:3.0, step:0.1, def:0.3},
   ],
 };
 
@@ -739,7 +739,7 @@ function renderAlgo(imgData,algo,params){
 
 function sqH(g,w,h,{lineCount,amplitude,frequency,sampling}){
   lineCount=Math.max(1,Math.round(lineCount));
-  const spacing=h/lineCount;
+  const spacing=h/lineCount; // Sorok távolsága pixelben
   const paths=[];
 
   for(let li=0;li<lineCount;li++){
@@ -750,8 +750,13 @@ function sqH(g,w,h,{lineCount,amplitude,frequency,sampling}){
       const br=sg(g,w,h,x,y0)*255;
       const dark255 = 255 - br; 
       
-      a += dark255 / frequency; 
-      const r = (dark255 / lineCount) * amplitude;
+      // Az eredeti p5.js 0-100-as skálát használ a fényerőre! Ezért a 2.55-ös osztó:
+      const dark100 = dark255 / 2.55; 
+      
+      a += dark100 / frequency; 
+      
+      // A KULCS: Az amplitúdó a SORTÁVOLSÁG szorzója, nem egy fix pixel érték!
+      const r = (dark100 / 100) * amplitude * spacing;
       
       const py = y0 + Math.sin(a) * r;
       pts += (pts==='' ? `M${x.toFixed(2)},${py.toFixed(2)}` : ` L${x.toFixed(2)},${py.toFixed(2)}`);
@@ -772,10 +777,10 @@ function sqV(g,w,h,{lineCount,amplitude,frequency,sampling}){
     let a=0; 
     for(let y=0; y<=h; y+=sampling){
       const br=sg(g,w,h,x0,y)*255;
-      const dark255 = 255 - br;
+      const dark100 = (255 - br) / 2.55;
       
-      a += dark255 / frequency;
-      const r = (dark255 / lineCount) * amplitude;
+      a += dark100 / frequency;
+      const r = (dark100 / 100) * amplitude * spacing;
       
       const px = x0 + Math.sin(a) * r;
       pts += (pts==='' ? `M${px.toFixed(2)},${y.toFixed(2)}` : ` L${px.toFixed(2)},${y.toFixed(2)}`);
@@ -789,6 +794,7 @@ function sqSpiral(g,w,h,{lineCount,amplitude,frequency,sampling}){
   lineCount=Math.max(1,Math.round(lineCount));
   const cx=w/2, cy=h/2, maxR=Math.min(w,h)/2;
   const totalAngle=lineCount*Math.PI*2;
+  const spacing = maxR / lineCount; // Gyűrűk távolsága
   
   let pts='';
   let a=0; 
@@ -801,15 +807,14 @@ function sqSpiral(g,w,h,{lineCount,amplitude,frequency,sampling}){
     const sx = cx + Math.cos(angle)*baseR;
     const sy = cy + Math.sin(angle)*baseR;
     
-    // Szögbeli lépésköz, hogy az ív hossza kb. 'sampling' pixel legyen
     const dAngle = sampling / baseR;
     
     if(sx>=0 && sx<w && sy>=0 && sy<h){
       const br=sg(g,w,h,sx,sy)*255;
-      const dark255 = 255 - br;
+      const dark100 = (255 - br) / 2.55;
       
-      a += dark255 / frequency;
-      const r = (dark255 / lineCount) * amplitude;
+      a += dark100 / frequency;
+      const r = (dark100 / 100) * amplitude * spacing;
       
       const rr = baseR + Math.sin(a) * r;
       const px = cx + Math.cos(angle)*rr;
@@ -831,9 +836,8 @@ function drawPaths(paths, imgW, imgH, strokeW){
   pc.width=Math.round(imgW*sc);pc.height=Math.round(imgH*sc);
   ctx.fillStyle='#fff';ctx.fillRect(0,0,pc.width,pc.height);
   
-  // A vásznon a vonalvastagság a kiválasztott paraméter szerinti
   ctx.strokeStyle='#000';
-  ctx.lineWidth=strokeW || 0.4;
+  ctx.lineWidth=strokeW || 0.3; // Szépen ráül a canvasra a beállított vastagság
   ctx.lineCap='round';ctx.lineJoin='round';
   
   ctx.save();ctx.scale(sc,sc);
@@ -902,7 +906,7 @@ function expSVG(){
   const{w:pw,h:ph,margin:pm}=S.paper,iw=S.processed.width,ih=S.processed.height;
   const avW=pw-pm*2,avH=ph-pm*2,sc=Math.min(avW/iw,avH/ih);
   const ox=pm+(avW-iw*sc)/2,oy=pm+(avH-ih*sc)/2;
-  const strokeW = S.params.strokeW || 0.4;
+  const strokeW = S.params.strokeW || 0.3; // Az SVG milliméterben értelmezi, plotterhez tökéletes
   
   const ps=S.paths.map(d=>`  <path d="${d.replace(/(-?\d+\.?\d*),(-?\d+\.?\d*)/g,(_,x,y)=>`${(parseFloat(x)*sc+ox).toFixed(2)},${(parseFloat(y)*sc+oy).toFixed(2)}`)}" fill="none" stroke="#000" stroke-width="${strokeW}" stroke-linecap="round" stroke-linejoin="round"/>`).join('\n');
   const svg=`<?xml version="1.0" encoding="UTF-8"?>\n<svg xmlns="http://www.w3.org/2000/svg" width="${pw}mm" height="${ph}mm" viewBox="0 0 ${pw} ${ph}">\n  <rect width="${pw}" height="${ph}" fill="#fff"/>\n${ps}\n</svg>`;
@@ -916,7 +920,7 @@ function expRaster(fmt){
   const iw=S.processed.width,ih=S.processed.height;
   const mpx=pm/mpi*dpi,avW=cw-mpx*2,avH=ch-mpx*2,sc=Math.min(avW/iw,avH/ih);
   const ox=mpx+(avW-iw*sc)/2,oy=mpx+(avH-ih*sc)/2;
-  const strokeW = S.params.strokeW || 0.4;
+  const strokeW = S.params.strokeW || 0.3;
   
   cc.strokeStyle='#000';
   cc.lineWidth = (strokeW * (dpi / mpi)) / sc;
