@@ -59,25 +59,24 @@ input[type=range]{cursor:pointer}
 .tb-btn:hover{border-color:var(--border2);color:var(--fg)}
 .tb-title{font-size:14px;font-weight:700;letter-spacing:-.3px}
 
+/* INTERACTIVE PREVIEW AREA */
 #preview-area{
   flex:1;min-height:0;position:relative;overflow:hidden;
   display:flex;align-items:center;justify-content:center;
   background:linear-gradient(var(--border) 1px,transparent 1px),
     linear-gradient(90deg,var(--border) 1px,transparent 1px);
   background-size:20px 20px;background-color:var(--bg);
-  cursor:pointer;
+  cursor:grab; touch-action:none; /* Prevents mobile page refresh on drag */
 }
-#preview-canvas{display:block;max-width:100%;max-height:100%}
+#preview-area:active{cursor:grabbing;}
+#preview-canvas{display:block;max-width:100%;max-height:100%;box-shadow:0 0 20px rgba(0,0,0,0.5)}
 .spin{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;
   background:rgba(14,14,15,.6);backdrop-filter:blur(4px);pointer-events:none}
 .sring{width:34px;height:34px;border:2px solid var(--border2);border-top-color:var(--accent);
   border-radius:50%;animation:sp .7s linear infinite}
 @keyframes sp{to{transform:rotate(360deg)}}
 
-#preview-fs{position:fixed;inset:0;z-index:300;background:#000;
-  display:flex;align-items:center;justify-content:center;cursor:pointer}
-#preview-fs canvas{max-width:100%;max-height:100%;display:block}
-
+/* ──── PANEL ──── */
 #panel{flex-shrink:0;display:flex;flex-direction:column;
   background:var(--bg2);border-top:1px solid var(--border)}
 
@@ -223,32 +222,6 @@ input[type=range]{cursor:pointer}
   #d-algo{display:none!important}
 }
 
-#crop-modal{position:fixed;inset:0;z-index:400;display:flex;flex-direction:column;
-  background:rgba(0,0,0,.92)}
-#crop-bg{position:absolute;inset:0;pointer-events:none}
-#crop-region{flex:1;position:relative;overflow:hidden}
-#crop-box{position:absolute;border:1.5px solid rgba(232,255,71,.8);cursor:move;
-  box-shadow:0 0 0 9999px rgba(0,0,0,.5)}
-.cc{position:absolute;width:14px;height:14px;border-color:var(--accent);border-style:solid}
-.cc.tl{top:-2px;left:-2px;border-width:2px 0 0 2px;cursor:nw-resize}
-.cc.tr{top:-2px;right:-2px;border-width:2px 2px 0 0;cursor:ne-resize}
-.cc.bl{bottom:-2px;left:-2px;border-width:0 0 2px 2px;cursor:sw-resize}
-.cc.br{bottom:-2px;right:-2px;border-width:0 2px 2px 0;cursor:se-resize}
-.cgrid{position:absolute;inset:0;pointer-events:none;
-  background-image:linear-gradient(rgba(232,255,71,.12) 1px,transparent 1px),
-    linear-gradient(90deg,rgba(232,255,71,.12) 1px,transparent 1px);
-  background-size:33.33% 33.33%}
-#crop-bar{padding:10px 12px;background:var(--bg2);border-top:1px solid var(--border);
-  display:flex;align-items:center;gap:8px;flex-shrink:0}
-.cr-rat{display:flex;gap:4px;flex:1;justify-content:center}
-.rb{padding:5px 10px;border-radius:4px;border:1px solid var(--border);background:transparent;
-  color:var(--fg-muted);font-family:var(--mono);font-size:11px;transition:.15s}
-.rb.active,.rb:hover{border-color:var(--accent);color:var(--accent)}
-.cact{padding:7px 16px;border-radius:6px;border:none;font-family:var(--font);font-size:12px;font-weight:600;transition:.15s}
-.cact.cancel{background:transparent;border:1px solid var(--border2);color:var(--fg-muted)}
-.cact.apply{background:var(--accent);color:#0e0e0f}
-.cact.apply:hover{background:#f3ff60}
-
 #toast{position:fixed;bottom:calc(var(--nav)+10px);left:50%;
   transform:translateX(-50%) translateY(6px);
   background:var(--bg3);border:1px solid var(--border2);border-radius:6px;
@@ -354,13 +327,14 @@ input[type=range]{cursor:pointer}
     <div id="content-area">
       <div class="cpanel active" id="cp-edit">
         <div>
-          <div class="clbl">Vágás &amp; Forgatás</div>
+          <div class="clbl">Nézet & Forgatás</div>
           <div class="btn-row">
-            <button class="e-btn" id="btn-crop"><svg width="17" height="17" viewBox="0 0 17 17" fill="none"><path d="M4 1v11a1 1 0 001 1h11M1 4h11a1 1 0 011 1v11" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/></svg>Vágás</button>
-            <button class="e-btn" id="btn-rotl"><svg width="17" height="17" viewBox="0 0 17 17" fill="none"><path d="M3 8.5a5.5 5.5 0 105.5-5.5H6M6 1L3.5 3.5 6 6" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg>−90°</button>
-            <button class="e-btn" id="btn-rotr"><svg width="17" height="17" viewBox="0 0 17 17" fill="none"><path d="M14 8.5a5.5 5.5 0 11-5.5-5.5H11M11 1l2.5 2.5L11 6" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg>+90°</button>
-            <button class="e-btn" id="btn-flip"><svg width="17" height="17" viewBox="0 0 17 17" fill="none"><path d="M8.5 2v13M2.5 5l-2 3.5 2 3.5M14.5 5l2 3.5-2 3.5" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg>Tükrözés</button>
+            <button class="e-btn" id="btn-fit"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h16v16H4zM10 10l-6-6m0 0h4m-4 0v4m14 6l-6-6m6 6h-4m4 0v-4"/></svg>Illesztés</button>
+            <button class="e-btn" id="btn-zi"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35M11 8v6M8 11h6"/></svg>Nagyítás</button>
+            <button class="e-btn" id="btn-zo"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35M8 11h6"/></svg>Kicsinyítés</button>
+            <button class="e-btn" id="btn-rot"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 11-9-9c2.52 0 4.93 1 6.74 2.74L21 8M21 3v5h-5"/></svg>Forgatás</button>
           </div>
+          <div style="font-size:10px;color:var(--fg-muted);margin-top:8px;text-align:center">💡 Tipp: Nagyítsd és mozgasd a képet az előnézetben! (Görgő / Csípés)</div>
         </div>
         <div>
           <div class="clbl">Tónuskorrekció</div>
@@ -403,28 +377,6 @@ input[type=range]{cursor:pointer}
   </div>
 </div>
 
-<div id="crop-modal" class="hidden">
-  <canvas id="crop-bg"></canvas>
-  <div id="crop-region">
-    <div id="crop-box">
-      <div class="cc tl"></div><div class="cc tr"></div>
-      <div class="cc bl"></div><div class="cc br"></div>
-      <div class="cgrid"></div>
-    </div>
-  </div>
-  <div id="crop-bar">
-    <button class="cact cancel" id="crop-cancel">Mégse</button>
-    <div class="cr-rat">
-      <button class="rb active" data-ratio="free">Szabad</button>
-      <button class="rb" data-ratio="1">1:1</button>
-      <button class="rb" data-ratio="1.333">4:3</button>
-      <button class="rb" data-ratio="1.414">A4</button>
-    </div>
-    <button class="cact apply" id="crop-apply">Alkalmaz</button>
-  </div>
-</div>
-
-<div id="preview-fs" class="hidden"><canvas id="fs-canvas"></canvas></div>
 <div id="toast"></div>
 
 <script>
@@ -433,7 +385,9 @@ input[type=range]{cursor:pointer}
 // STATE
 // ══════════════════════════════════════════
 const S={
-  original:null,cropped:null,processed:null,paths:null,
+  img:null, processed:null, paths:null,
+  cW:500, cH:750, // Virtual canvas size (2:3 or 3:2)
+  panX:0, panY:0, zoom:1,
   algo:'squiggle-h',
   params:{frequency:120, lineCount:25, amplitude:1.5, sampling:1.3, strokeW:0.3},
   tone:{brightness:0,contrast:0,blackPoint:0,whitePoint:255,gamma:1.0},
@@ -441,7 +395,7 @@ const S={
   activeParamIdx:0,activeSection:'edit',
 };
 
-// ── PARAM DEFS (Sorrend és értékek pont mint az eredeti screenshoton) ──
+// ── PARAM DEFS ──
 const PDEFS={
   'squiggle-h':[
     {id:'frequency', label:'Frekvencia',    min:5,   max:256, step:1,   def:120},
@@ -477,13 +431,14 @@ const $=id=>document.getElementById(id);
 const pa=$('preview-area'),pc=$('preview-canvas'),ctx=pc.getContext('2d'),sp=$('spinner');
 
 function init(){
-  setupFile();setupNav();setupEdit();setupExport();
-  buildDesktopCards();initParams('squiggle-h');setupPreviewTap();
+  setupFile();setupNav();setupEdit();setupExport();setupPanZoom();
+  buildDesktopCards();initParams('squiggle-h');
   document.querySelectorAll('#mode-row .mode-btn[data-algo]').forEach(b=>{
     b.onclick=()=>selectAlgo(b.dataset.algo);
   });
 }
 
+// ── FILE LOADING ──
 function setupFile(){
   $('btn-choose').onclick=()=>{$('fi0').value='';$('fi0').click()};
   $('fi0').onchange=e=>{if(e.target.files[0])loadFile(e.target.files[0])};
@@ -500,18 +455,32 @@ function loadFile(f){
   const url=URL.createObjectURL(f);
   const img=new Image();
   img.onload=()=>{
-    S.original=toData(img);S.cropped=S.original;S.paths=null;
-    applyToneAndDraw();
+    const c = document.createElement('canvas');
+    c.width = img.naturalWidth; c.height = img.naturalHeight;
+    c.getContext('2d').drawImage(img,0,0);
+    S.img = c; // Eltároljuk canvas formátumban a forgatáshoz
+    
+    resetView();
     $('landing').classList.add('hidden');
     $('editor').classList.remove('hidden');
     URL.revokeObjectURL(url);
-    scheduleRender();
   };
   img.src=url;
 }
-function toData(img){
-  const c=document.createElement('canvas');c.width=img.naturalWidth;c.height=img.naturalHeight;
-  c.getContext('2d').drawImage(img,0,0);return c.getContext('2d').getImageData(0,0,c.width,c.height);
+function resetView() {
+  if(!S.img) return;
+  // Dinamikusan A4 arányhoz legközelebbi 2:3 vagy 3:2 keret kialakítása
+  if(S.img.width >= S.img.height) { S.cW = 750; S.cH = 500; }
+  else { S.cW = 500; S.cH = 750; }
+  
+  // Cover fit
+  S.zoom = Math.max(S.cW/S.img.width, S.cH/S.img.height);
+  S.panX = (S.cW - S.img.width*S.zoom)/2;
+  S.panY = (S.cH - S.img.height*S.zoom)/2;
+  
+  S.paths = null;
+  applyToneAndDraw();
+  debRender();
 }
 
 function setupNav(){
@@ -531,53 +500,111 @@ function switchSec(sec){
   $('d-algo').style.display=(!isMobile&&sec==='algo')?'flex':'none';
 }
 
-function setupPreviewTap(){
-  pa.onclick=()=>{
-    if(!S.processed)return;
-    const fs=$('preview-fs'),fsc=$('fs-canvas');
-    fs.classList.remove('hidden');
-    fsc.width=pc.width;fsc.height=pc.height;
-    fsc.getContext('2d').drawImage(pc,0,0);
-    const sw=window.innerWidth,sh=window.innerHeight,sc=Math.min(sw/pc.width,sh/pc.height);
-    fsc.style.width=Math.round(pc.width*sc)+'px';
-    fsc.style.height=Math.round(pc.height*sc)+'px';
-  };
-  $('preview-fs').onclick=()=>$('preview-fs').classList.add('hidden');
-}
-
+// ── EDIT & PAN/ZOOM ──
 function setupEdit(){
-  $('btn-rotl').onclick=()=>{if(!S.cropped)return;S.cropped=rotData(S.cropped,-90);S.paths=null;applyToneAndDraw();scheduleRender()};
-  $('btn-rotr').onclick=()=>{if(!S.cropped)return;S.cropped=rotData(S.cropped,90);S.paths=null;applyToneAndDraw();scheduleRender()};
-  $('btn-flip').onclick=()=>{if(!S.cropped)return;S.cropped=flipData(S.cropped);S.paths=null;applyToneAndDraw();scheduleRender()};
-  $('btn-crop').onclick=openCrop;
+  $('btn-fit').onclick = resetView;
+  $('btn-zi').onclick = () => { S.zoom *= 1.2; S.panX = S.cW/2 - (S.cW/2 - S.panX)*1.2; S.panY = S.cH/2 - (S.cH/2 - S.panY)*1.2; S.paths=null; applyToneAndDraw(); debRender(); };
+  $('btn-zo').onclick = () => { S.zoom /= 1.2; S.panX = S.cW/2 - (S.cW/2 - S.panX)/1.2; S.panY = S.cH/2 - (S.cH/2 - S.panY)/1.2; S.paths=null; applyToneAndDraw(); debRender(); };
+  $('btn-rot').onclick = rotateImg;
+  
   [['tsl-bright','tv-bright','brightness',v=>v,v=>v],
    ['tsl-contrast','tv-contrast','contrast',v=>v,v=>v],
    ['tsl-black','tv-black','blackPoint',v=>v,v=>v],
    ['tsl-white','tv-white','whitePoint',v=>v,v=>v],
    ['tsl-gamma','tv-gamma','gamma',v=>v/100,v=>(v/100).toFixed(1)]
   ].forEach(([si,vi,key,toS,toD])=>{
-    $(si).oninput=()=>{S.tone[key]=toS(parseFloat($(si).value));$(vi).textContent=toD(parseFloat($(si).value));deb(()=>{applyToneAndDraw();scheduleRender()},60,'tone')()};
+    $(si).oninput=()=>{S.tone[key]=toS(parseFloat($(si).value));$(vi).textContent=toD(parseFloat($(si).value)); S.paths=null; applyToneAndDraw(); debRender();};
   });
   $('btn-reset-tone').onclick=()=>{
     S.tone={brightness:0,contrast:0,blackPoint:0,whitePoint:255,gamma:1.0};
     [['tsl-bright',0],['tsl-contrast',0],['tsl-black',0],['tsl-white',255],['tsl-gamma',100]].forEach(([id,v])=>$(id).value=v);
     ['tv-bright','tv-contrast','tv-black'].forEach(id=>$(id).textContent='0');
     $('tv-white').textContent='255';$('tv-gamma').textContent='1.0';
-    applyToneAndDraw();scheduleRender();
+    S.paths=null; applyToneAndDraw(); debRender();
   };
 }
-function rotData(d,deg){
-  const{width:w,height:h}=d,cw=(deg===90||deg===-90)?h:w,ch=(deg===90||deg===-90)?w:h;
-  const c=document.createElement('canvas');c.width=cw;c.height=ch;
-  const cx=c.getContext('2d');cx.translate(cw/2,ch/2);cx.rotate(deg*Math.PI/180);
-  const t=document.createElement('canvas');t.width=w;t.height=h;t.getContext('2d').putImageData(d,0,0);
-  cx.drawImage(t,-w/2,-h/2);return cx.getImageData(0,0,cw,ch);
+
+function rotateImg() {
+  if(!S.img) return;
+  const c = document.createElement('canvas');
+  c.width = S.img.height; c.height = S.img.width;
+  const cx = c.getContext('2d');
+  cx.translate(c.width/2, c.height/2);
+  cx.rotate(90 * Math.PI/180);
+  cx.drawImage(S.img, -S.img.width/2, -S.img.height/2);
+  S.img = c;
+  resetView();
 }
-function flipData(d){
-  const{width:w,height:h}=d,c=document.createElement('canvas');c.width=w;c.height=h;
-  const cx=c.getContext('2d');cx.translate(w,0);cx.scale(-1,1);
-  const t=document.createElement('canvas');t.width=w;t.height=h;t.getContext('2d').putImageData(d,0,0);
-  cx.drawImage(t,0,0);return cx.getImageData(0,0,w,h);
+
+function setupPanZoom() {
+  let isDragging = false;
+  let lastX, lastY;
+  
+  pa.addEventListener('mousedown', e => {
+      if(!S.img) return;
+      isDragging = true;
+      lastX = e.clientX; lastY = e.clientY;
+  });
+  window.addEventListener('mousemove', e => {
+      if(!isDragging) return;
+      const dx = e.clientX - lastX; const dy = e.clientY - lastY;
+      lastX = e.clientX; lastY = e.clientY;
+      const sc = Math.min((pa.clientWidth||400)/S.cW, (pa.clientHeight||400)/S.cH, 1);
+      S.panX += dx / sc; S.panY += dy / sc;
+      S.paths = null; applyToneAndDraw(); debRender();
+  });
+  window.addEventListener('mouseup', () => { isDragging = false; });
+  
+  pa.addEventListener('wheel', e => {
+      if(!S.img) return;
+      e.preventDefault();
+      const zoomFactor = e.deltaY > 0 ? 0.9 : 1.1;
+      const sc = Math.min((pa.clientWidth||400)/S.cW, (pa.clientHeight||400)/S.cH, 1);
+      const rect = pc.getBoundingClientRect();
+      const mx = (e.clientX - rect.left) / sc; const my = (e.clientY - rect.top) / sc;
+      
+      S.panX = mx - (mx - S.panX) * zoomFactor;
+      S.panY = my - (my - S.panY) * zoomFactor;
+      S.zoom *= zoomFactor;
+      S.paths = null; applyToneAndDraw(); debRender();
+  }, {passive: false});
+  
+  // Touch
+  let initialPinchDist = null; let initialZoom = 1;
+  pa.addEventListener('touchstart', e => {
+      if(!S.img) return;
+      if(e.touches.length === 1) {
+          isDragging = true;
+          lastX = e.touches[0].clientX; lastY = e.touches[0].clientY;
+      } else if(e.touches.length === 2) {
+          isDragging = false;
+          initialPinchDist = Math.hypot(e.touches[0].clientX - e.touches[1].clientX, e.touches[0].clientY - e.touches[1].clientY);
+          initialZoom = S.zoom;
+      }
+  }, {passive: false});
+  pa.addEventListener('touchmove', e => {
+      if(!S.img) return;
+      e.preventDefault();
+      if(isDragging && e.touches.length === 1) {
+          const dx = e.touches[0].clientX - lastX; const dy = e.touches[0].clientY - lastY;
+          lastX = e.touches[0].clientX; lastY = e.touches[0].clientY;
+          const sc = Math.min((pa.clientWidth||400)/S.cW, (pa.clientHeight||400)/S.cH, 1);
+          S.panX += dx / sc; S.panY += dy / sc;
+          S.paths = null; applyToneAndDraw(); debRender();
+      } else if(e.touches.length === 2 && initialPinchDist) {
+          const dist = Math.hypot(e.touches[0].clientX - e.touches[1].clientX, e.touches[0].clientY - e.touches[1].clientY);
+          const zoomFactor = dist / initialPinchDist;
+          const cx = S.cW / 2; const cy = S.cH / 2;
+          S.panX = cx - (cx - S.panX) * (zoomFactor / (S.zoom / initialZoom));
+          S.panY = cy - (cy - S.panY) * (zoomFactor / (S.zoom / initialZoom));
+          S.zoom = initialZoom * zoomFactor;
+          S.paths = null; applyToneAndDraw(); debRender();
+      }
+  }, {passive: false});
+  pa.addEventListener('touchend', e => {
+      if(e.touches.length < 2) initialPinchDist = null;
+      if(e.touches.length === 0) isDragging = false;
+  });
 }
 
 function applyTone(id){
@@ -591,44 +618,43 @@ function applyTone(id){
 }
 
 function applyToneAndDraw(){
-  if(!S.cropped)return;
+  if(!S.img) return;
   
-  const MAX_DIM = 800;
-  let cw = S.cropped.width;
-  let ch = S.cropped.height;
-  
-  if(cw > MAX_DIM || ch > MAX_DIM) {
-    const scale = Math.min(MAX_DIM/cw, MAX_DIM/ch);
-    cw = Math.round(cw * scale);
-    ch = Math.round(ch * scale);
-  }
-  
+  // Create the exact 500x750 or 750x500 canvas
   const tempC = document.createElement('canvas');
-  tempC.width = cw; tempC.height = ch;
-  const tempCtx = tempC.getContext('2d');
+  tempC.width = S.cW; tempC.height = S.cH;
+  const ctxTemp = tempC.getContext('2d');
   
-  const oc = document.createElement('canvas');
-  oc.width = S.cropped.width; oc.height = S.cropped.height;
-  oc.getContext('2d').putImageData(S.cropped, 0, 0);
+  // Fill background white
+  ctxTemp.fillStyle = '#ffffff';
+  ctxTemp.fillRect(0,0,S.cW,S.cH);
   
-  tempCtx.drawImage(oc, 0, 0, cw, ch);
-  const scaledData = tempCtx.getImageData(0, 0, cw, ch);
+  // Draw scaled and panned image
+  ctxTemp.drawImage(S.img, S.panX, S.panY, S.img.width*S.zoom, S.img.height*S.zoom);
   
-  S.processed = applyTone(scaledData);
+  const idata = ctxTemp.getImageData(0,0,S.cW,S.cH);
+  S.processed = applyTone(idata);
   
-  const img = S.processed;
+  // Draw fast image preview if squiggle is not computed yet
+  if (!S.paths) {
+      drawPreviewImage(S.processed);
+  }
+}
+
+function drawPreviewImage(imgData) {
   const mxW = pa.clientWidth || 400, mxH = pa.clientHeight || 400;
-  const sc = Math.min(mxW/img.width, mxH/img.height, 1);
+  const sc = Math.min(mxW/S.cW, mxH/S.cH, 1);
   
-  pc.width = Math.round(img.width*sc); pc.height = Math.round(img.height*sc);
+  pc.width = Math.round(S.cW*sc); pc.height = Math.round(S.cH*sc);
   
   const t = document.createElement('canvas');
-  t.width = img.width; t.height = img.height;
-  t.getContext('2d').putImageData(img, 0, 0);
+  t.width = S.cW; t.height = S.cH;
+  t.getContext('2d').putImageData(imgData, 0, 0);
   ctx.clearRect(0,0,pc.width,pc.height);
   ctx.drawImage(t, 0, 0, pc.width, pc.height);
 }
 
+// ── PARAMS ──
 function initParams(algo){
   const defs=PDEFS[algo]||[];
   S.params={};defs.forEach(p=>S.params[p.id]=p.def);
@@ -663,7 +689,7 @@ function setMainSlider(algo,idx){
     $('sl-val').textContent=fmt(p,v);
     const dsl=document.querySelector(`#d-params .d-psl[data-pid="${p.id}"]`);
     if(dsl){dsl.value=v;const pv=dsl.parentElement.querySelector('.d-pv');if(pv)pv.textContent=fmt(p,v);}
-    scheduleRender();
+    debRender();
   };
 }
 function buildDesktopCards(){
@@ -694,7 +720,7 @@ function buildDesktopParams(algo){
       const v=parseFloat(sl.value);S.params[p.id]=v;
       row.querySelector('.d-pv').textContent=fmt(p,v);
       if(S.activeParamIdx===(PDEFS[algo]||[]).indexOf(p)){const ms=$('main-sl');if(ms){ms.value=v;$('sl-val').textContent=fmt(p,v);}}
-      scheduleRender();
+      debRender();
     };
   });
 }
@@ -702,16 +728,24 @@ function selectAlgo(algo){
   S.algo=algo;S.paths=null;
   document.querySelectorAll('.dac').forEach(c=>c.classList.toggle('active',c.dataset.algo===algo));
   document.querySelectorAll('#mode-row .mode-btn[data-algo]').forEach(b=>b.classList.toggle('active',b.dataset.algo===algo));
-  initParams(algo);scheduleRender();
+  initParams(algo);debRender();
 }
 
-let rTimer=null;
-function scheduleRender(){clearTimeout(rTimer);rTimer=setTimeout(runRender,300);}
+// ── RENDER ──
+let _rTimer=null;
+function debRender(){
+  clearTimeout(_rTimer);
+  _rTimer = setTimeout(runRender, 400); // 400ms késleltetés a sima scrollozásért
+}
+
 function runRender(){
   if(!S.processed)return;
   sp.classList.remove('hidden');
   setTimeout(()=>{
-    try{S.paths=renderAlgo(S.processed,S.algo,S.params);drawPaths(S.paths,S.processed.width,S.processed.height, S.params.strokeW);}
+    try{
+        S.paths=renderAlgo(S.processed,S.algo,S.params);
+        drawPaths(S.paths, S.cW, S.cH, S.params.strokeW);
+    }
     catch(e){console.error(e);toast('Render hiba');}
     sp.classList.add('hidden');
   },16);
@@ -725,9 +759,7 @@ function getGray(id){
 }
 function sg(g,w,h,x,y){return g[Math.max(0,Math.min(h-1,y|0))*w+Math.max(0,Math.min(w-1,x|0))];}
 
-// ══════════════════════════════════════════
-// FIXED SquiggleCam ALGORITHMS (Metszés, tizedesjegy pontosság)
-// ══════════════════════════════════════════
+// ── ALGORITHMS ──
 function renderAlgo(imgData,algo,params){
   const{g,w,h}=getGray(imgData);
   if(algo==='squiggle-h')return sqH(g,w,h,params);
@@ -739,7 +771,7 @@ function renderAlgo(imgData,algo,params){
 
 function sqH(g,w,h,{lineCount,amplitude,frequency,sampling}){
   lineCount=Math.max(1,Math.round(lineCount));
-  const spacing=h/lineCount; // Sorok távolsága pixelben
+  const spacing=h/lineCount; 
   const paths=[];
 
   for(let li=0;li<lineCount;li++){
@@ -748,14 +780,9 @@ function sqH(g,w,h,{lineCount,amplitude,frequency,sampling}){
     let a=0; 
     for(let x=0; x<=w; x+=sampling){
       const br=sg(g,w,h,x,y0)*255;
-      const dark255 = 255 - br; 
-      
-      // Az eredeti p5.js 0-100-as skálát használ a fényerőre! Ezért a 2.55-ös osztó:
-      const dark100 = dark255 / 2.55; 
+      const dark100 = (255 - br) / 2.55; 
       
       a += dark100 / frequency; 
-      
-      // A KULCS: Az amplitúdó a SORTÁVOLSÁG szorzója, nem egy fix pixel érték!
       const r = (dark100 / 100) * amplitude * spacing;
       
       const py = y0 + Math.sin(a) * r;
@@ -792,9 +819,13 @@ function sqV(g,w,h,{lineCount,amplitude,frequency,sampling}){
 
 function sqSpiral(g,w,h,{lineCount,amplitude,frequency,sampling}){
   lineCount=Math.max(1,Math.round(lineCount));
-  const cx=w/2, cy=h/2, maxR=Math.min(w,h)/2;
+  const cx=w/2, cy=h/2;
+  
+  // A SÍK KÖZEPÉBEN EGY TÖKÉLETES KÖR ALAKÚ SPIRÁL A RÖVIDEBB OLDALIG
+  const maxR = Math.min(w,h) / 2;
+  
   const totalAngle=lineCount*Math.PI*2;
-  const spacing = maxR / lineCount; // Gyűrűk távolsága
+  const spacing = maxR / lineCount;
   
   let pts='';
   let a=0; 
@@ -837,7 +868,7 @@ function drawPaths(paths, imgW, imgH, strokeW){
   ctx.fillStyle='#fff';ctx.fillRect(0,0,pc.width,pc.height);
   
   ctx.strokeStyle='#000';
-  ctx.lineWidth=strokeW || 0.3; // Szépen ráül a canvasra a beállított vastagság
+  ctx.lineWidth=strokeW || 0.3; 
   ctx.lineCap='round';ctx.lineJoin='round';
   
   ctx.save();ctx.scale(sc,sc);
@@ -845,53 +876,7 @@ function drawPaths(paths, imgW, imgH, strokeW){
   ctx.restore();
 }
 
-let CS={};
-function openCrop(){
-  if(!S.cropped)return;
-  const m=$('crop-modal');m.classList.remove('hidden');
-  const bg=$('crop-bg');bg.width=window.innerWidth;bg.height=window.innerHeight;
-  const bc=bg.getContext('2d');bc.fillStyle='#080808';bc.fillRect(0,0,bg.width,bg.height);
-  const img=S.cropped;
-  const sc=Math.min(bg.width/img.width,(bg.height-56)/img.height)*0.9;
-  const dw=img.width*sc,dh=img.height*sc,dx=(bg.width-dw)/2,dy=((bg.height-56)-dh)/2;
-  const t=document.createElement('canvas');t.width=img.width;t.height=img.height;t.getContext('2d').putImageData(img,0,0);
-  bc.drawImage(t,dx,dy,dw,dh);
-  CS={ix:dx,iy:dy,iw:dw,ih:dh,x:dx,y:dy,w:dw,h:dh,sc,imgW:img.width,imgH:img.height,ratio:'free'};
-  posBox();
-  document.querySelectorAll('.rb').forEach(b=>{
-    b.classList.toggle('active',b.dataset.ratio==='free');
-    b.onclick=()=>{document.querySelectorAll('.rb').forEach(x=>x.classList.remove('active'));b.classList.add('active');CS.ratio=b.dataset.ratio;if(CS.ratio!=='free')forceR();posBox();};
-  });
-  const ob=$('crop-box'),nb=ob.cloneNode(true);ob.parentNode.replaceChild(nb,ob);
-  const box=$('crop-box');
-  let drag={on:false};
-  function pd(e,type){e.preventDefault();const pt=e.touches?e.touches[0]:e;drag={on:true,type,sx:pt.clientX,sy:pt.clientY,bx:CS.x,by:CS.y,bw:CS.w,bh:CS.h};document.addEventListener('mousemove',pm);document.addEventListener('touchmove',pm,{passive:false});document.addEventListener('mouseup',pu);document.addEventListener('touchend',pu);}
-  function pm(e){if(!drag.on)return;e.preventDefault();const pt=e.touches?e.touches[0]:e;const dx=pt.clientX-drag.sx,dy=pt.clientY-drag.sy;const{ix,iy,iw,ih}=CS,mn=30;
-    if(drag.type==='move'){CS.x=Math.max(ix,Math.min(ix+iw-drag.bw,drag.bx+dx));CS.y=Math.max(iy,Math.min(iy+ih-drag.bh,drag.by+dy));}
-    else if(drag.type==='br'){CS.w=Math.max(mn,Math.min(ix+iw-drag.bx,drag.bw+dx));CS.h=Math.max(mn,Math.min(iy+ih-drag.by,drag.bh+dy));}
-    else if(drag.type==='bl'){const nw=Math.max(mn,drag.bw-dx);CS.x=drag.bx+drag.bw-nw;CS.w=nw;CS.h=Math.max(mn,Math.min(iy+ih-drag.by,drag.bh+dy));}
-    else if(drag.type==='tr'){CS.w=Math.max(mn,Math.min(ix+iw-drag.bx,drag.bw+dx));const nh=Math.max(mn,drag.bh-dy);CS.y=drag.by+drag.bh-nh;CS.h=nh;}
-    else if(drag.type==='tl'){const nw=Math.max(mn,drag.bw-dx);CS.x=drag.bx+drag.bw-nw;CS.w=nw;const nh=Math.max(mn,drag.bh-dy);CS.y=drag.by+drag.bh-nh;CS.h=nh;}
-    if(CS.ratio!=='free')forceR();posBox();}
-  function pu(){drag.on=false;document.removeEventListener('mousemove',pm);document.removeEventListener('touchmove',pm);document.removeEventListener('mouseup',pu);document.removeEventListener('touchend',pu);}
-  box.addEventListener('mousedown',e=>pd(e,'move'));box.addEventListener('touchstart',e=>pd(e,'move'),{passive:false});
-  box.querySelectorAll('.cc').forEach(c=>{const t=[...c.classList][1];c.addEventListener('mousedown',e=>{e.stopPropagation();pd(e,t)});c.addEventListener('touchstart',e=>{e.stopPropagation();pd(e,t)},{passive:false});});
-  $('crop-cancel').onclick=()=>m.classList.add('hidden');
-  $('crop-apply').onclick=applyCrop;
-}
-function posBox(){const b=$('crop-box');b.style.left=CS.x+'px';b.style.top=CS.y+'px';b.style.width=CS.w+'px';b.style.height=CS.h+'px';}
-function forceR(){const r=parseFloat(CS.ratio);CS.h=CS.w/r;if(CS.y+CS.h>CS.iy+CS.ih){CS.h=CS.iy+CS.ih-CS.y;CS.w=CS.h*r;}}
-function applyCrop(){
-  const{x,y,w,h,ix,iy,sc:sc2,imgW,imgH}=CS;
-  const sx=Math.max(0,Math.round((x-ix)/sc2)),sy=Math.max(0,Math.round((y-iy)/sc2));
-  const sw=Math.min(imgW-sx,Math.round(w/sc2)),sh=Math.min(imgH-sy,Math.round(h/sc2));
-  if(sw<2||sh<2)return;
-  const t=document.createElement('canvas');t.width=imgW;t.height=imgH;t.getContext('2d').putImageData(S.cropped,0,0);
-  const o=document.createElement('canvas');o.width=sw;o.height=sh;o.getContext('2d').drawImage(t,sx,sy,sw,sh,0,0,sw,sh);
-  S.cropped=o.getContext('2d').getImageData(0,0,sw,sh);S.paths=null;
-  $('crop-modal').classList.add('hidden');applyToneAndDraw();scheduleRender();
-}
-
+// ── EXPORT ──
 function setupExport(){
   document.querySelectorAll('.pb').forEach(b=>b.onclick=()=>{document.querySelectorAll('.pb').forEach(x=>x.classList.remove('active'));b.classList.add('active');S.paper.w=parseInt(b.dataset.pw);S.paper.h=parseInt(b.dataset.ph);});
   $('sl-margin').oninput=e=>{S.paper.margin=parseInt(e.target.value);$('mv-margin').textContent=e.target.value;};
@@ -903,10 +888,10 @@ function doExport(){
   if(fmt==='svg')expSVG();else expRaster(fmt);
 }
 function expSVG(){
-  const{w:pw,h:ph,margin:pm}=S.paper,iw=S.processed.width,ih=S.processed.height;
+  const{w:pw,h:ph,margin:pm}=S.paper,iw=S.cW,ih=S.cH;
   const avW=pw-pm*2,avH=ph-pm*2,sc=Math.min(avW/iw,avH/ih);
   const ox=pm+(avW-iw*sc)/2,oy=pm+(avH-ih*sc)/2;
-  const strokeW = S.params.strokeW || 0.3; // Az SVG milliméterben értelmezi, plotterhez tökéletes
+  const strokeW = S.params.strokeW || 0.3; 
   
   const ps=S.paths.map(d=>`  <path d="${d.replace(/(-?\d+\.?\d*),(-?\d+\.?\d*)/g,(_,x,y)=>`${(parseFloat(x)*sc+ox).toFixed(2)},${(parseFloat(y)*sc+oy).toFixed(2)}`)}" fill="none" stroke="#000" stroke-width="${strokeW}" stroke-linecap="round" stroke-linejoin="round"/>`).join('\n');
   const svg=`<?xml version="1.0" encoding="UTF-8"?>\n<svg xmlns="http://www.w3.org/2000/svg" width="${pw}mm" height="${ph}mm" viewBox="0 0 ${pw} ${ph}">\n  <rect width="${pw}" height="${ph}" fill="#fff"/>\n${ps}\n</svg>`;
@@ -917,7 +902,7 @@ function expRaster(fmt){
   const cw=Math.round(pw/mpi*dpi),ch=Math.round(ph/mpi*dpi);
   const c=document.createElement('canvas');c.width=cw;c.height=ch;
   const cc=c.getContext('2d');cc.fillStyle='#fff';cc.fillRect(0,0,cw,ch);
-  const iw=S.processed.width,ih=S.processed.height;
+  const iw=S.cW,ih=S.cH;
   const mpx=pm/mpi*dpi,avW=cw-mpx*2,avH=ch-mpx*2,sc=Math.min(avW/iw,avH/ih);
   const ox=mpx+(avW-iw*sc)/2,oy=mpx+(avH-ih*sc)/2;
   const strokeW = S.params.strokeW || 0.3;
@@ -934,9 +919,7 @@ function dl(blob,name){const u=URL.createObjectURL(blob),a=document.createElemen
 
 let _tt;
 function toast(msg){const t=$('toast');t.textContent=msg;t.classList.add('show');clearTimeout(_tt);_tt=setTimeout(()=>t.classList.remove('show'),2500);}
-const _dbt={};
-function deb(fn,delay,key){return()=>{clearTimeout(_dbt[key]);_dbt[key]=setTimeout(fn,delay);};}
-window.addEventListener('resize',()=>{if(S.paths)drawPaths(S.paths,S.processed.width,S.processed.height, S.params.strokeW);else if(S.processed)applyToneAndDraw();});
+window.addEventListener('resize',()=>{if(S.paths)drawPaths(S.paths,S.cW,S.cH, S.params.strokeW);else if(S.processed)applyToneAndDraw();});
 
 init();
 </script>
