@@ -486,35 +486,35 @@ const S={
   activeParamIdx:0,activeSection:'edit',
 };
 
-// ── PARAM DEFS (matching SquiggleDraw reference) ──
-// frequency: 5–256  = sine cycles across full image width
-// lineCount: 10–200 = number of rows/columns
-// amplitude: 0.1–5  = max wave height as fraction of row spacing
-// sampling:  0.5–6  = pixel step between points (lower=smoother/slower)
+// ── PARAM DEFS — exact SquiggleCam parameters ──
+// lineCount: 10–200  = number of horizontal lines
+// amplitude: 1–50    = wave height factor  (r = (255-br)/lineCount * amplitude)
+// frequency: 5–256   = angle divisor       (a = (255-br)/frequency)
+// sampling:  1–10    = pixel step along x (spacing between points)
 const PDEFS={
   'squiggle-h':[
-    {id:'lineCount',label:'Vonalak száma',min:10, max:200,step:1,  def:80},
-    {id:'frequency',label:'Frekvencia',   min:5,  max:256,step:1,  def:40},
-    {id:'amplitude',label:'Amplitúdó',    min:0.1,max:5,  step:0.1,def:1.0},
-    {id:'sampling', label:'Mintavétel',   min:1,  max:6,  step:0.5,def:2},
+    {id:'lineCount', label:'Vonalak száma', min:10,  max:200, step:1,   def:80},
+    {id:'amplitude', label:'Amplitúdó',    min:1,   max:50,  step:1,   def:10},
+    {id:'frequency', label:'Frekvencia',   min:5,   max:256, step:1,   def:60},
+    {id:'sampling',  label:'Mintavétel',   min:1,   max:10,  step:1,   def:3},
   ],
   'squiggle-v':[
-    {id:'lineCount',label:'Vonalak száma',min:10, max:200,step:1,  def:80},
-    {id:'frequency',label:'Frekvencia',   min:5,  max:256,step:1,  def:40},
-    {id:'amplitude',label:'Amplitúdó',    min:0.1,max:5,  step:0.1,def:1.0},
-    {id:'sampling', label:'Mintavétel',   min:1,  max:6,  step:0.5,def:2},
+    {id:'lineCount', label:'Vonalak száma', min:10,  max:200, step:1,   def:80},
+    {id:'amplitude', label:'Amplitúdó',    min:1,   max:50,  step:1,   def:10},
+    {id:'frequency', label:'Frekvencia',   min:5,   max:256, step:1,   def:60},
+    {id:'sampling',  label:'Mintavétel',   min:1,   max:10,  step:1,   def:3},
   ],
   'squiggle-both':[
-    {id:'lineCount',label:'Vonalak száma',min:10, max:200,step:1,  def:60},
-    {id:'frequency',label:'Frekvencia',   min:5,  max:256,step:1,  def:40},
-    {id:'amplitude',label:'Amplitúdó',    min:0.1,max:5,  step:0.1,def:1.0},
-    {id:'sampling', label:'Mintavétel',   min:1,  max:6,  step:0.5,def:2},
+    {id:'lineCount', label:'Vonalak száma', min:10,  max:200, step:1,   def:60},
+    {id:'amplitude', label:'Amplitúdó',    min:1,   max:50,  step:1,   def:10},
+    {id:'frequency', label:'Frekvencia',   min:5,   max:256, step:1,   def:60},
+    {id:'sampling',  label:'Mintavétel',   min:1,   max:10,  step:1,   def:3},
   ],
   'spiral':[
-    {id:'lineCount',label:'Körök száma',  min:10, max:300,step:1,  def:100},
-    {id:'frequency',label:'Frekvencia',   min:5,  max:256,step:1,  def:40},
-    {id:'amplitude',label:'Amplitúdó',    min:0.1,max:5,  step:0.1,def:1.0},
-    {id:'sampling', label:'Mintavétel',   min:1,  max:6,  step:0.5,def:2},
+    {id:'lineCount', label:'Körök száma',   min:10,  max:300, step:1,   def:120},
+    {id:'amplitude', label:'Amplitúdó',    min:1,   max:50,  step:1,   def:10},
+    {id:'frequency', label:'Frekvencia',   min:5,   max:256, step:1,   def:60},
+    {id:'sampling',  label:'Mintavétel',   min:1,   max:10,  step:1,   def:3},
   ],
 };
 
@@ -759,22 +759,19 @@ function getGray(id){
 function sg(g,w,h,x,y){return g[Math.max(0,Math.min(h-1,y|0))*w+Math.max(0,Math.min(w-1,x|0))];}
 
 // ══════════════════════════════════════════
-// SQUIGGLE DRAW ALGORITHM
+// EXACT SquiggleCam ALGORITHM
+// Source: https://github.com/msurguy/SquiggleCam README
 //
-// Faithful port of Gregg Wygonik's SquiggleDraw:
+// For each horizontal line y (step = imageHeight / lineCount):
+//   For each x from 0 to imageWidth step SAMPLING:
+//     br = brightness of pixel at (x, y)   [0–255]
+//     r  = (255 - br) / lineCount * amplitude   ← wave radius/height
+//     a  = (255 - br) / frequency               ← wave angle (NOT cumulative!)
+//     pointY = y + sin(a) * r
 //
-// lineCount rows evenly spaced. For each row at y0:
-//   Walk x from 0 to width in steps of `sampling` pixels.
-//   At each x:
-//     brightness = gray value at (x, y0)  [0=black, 1=white]
-//     darkness   = 1 - brightness
-//     waveHeight = darkness * rowSpacing * amplitude * 0.5
-//     angle      += (2π * frequency / width) * sampling
-//     pointY     = y0 + sin(angle) * waveHeight
-//
-// frequency = cycles of the sine wave that fit across the full image width.
-// sampling  = pixel step. Smaller = smoother but more points (slow).
-// amplitude = scale factor for max wave height relative to row spacing.
+// Key: angle `a` is re-computed per pixel from brightness.
+// Dark pixel (br≈0)  → large r, large a → strong sine deflection
+// Light pixel (br≈255) → r=0, a=0      → stays on the baseline
 // ══════════════════════════════════════════
 function renderAlgo(imgData,algo,params){
   const{g,w,h}=getGray(imgData);
@@ -785,67 +782,79 @@ function renderAlgo(imgData,algo,params){
   return[];
 }
 
-function sqH(g,w,h,{lineCount,frequency,amplitude,sampling}){
+function sqH(g,w,h,{lineCount,amplitude,frequency,sampling}){
   lineCount=Math.max(1,Math.round(lineCount));
-  sampling=Math.max(0.5,+sampling);
-  const rowSpacing=h/lineCount;
-  const maxAmp=rowSpacing*amplitude*0.5;
-  const angleStep=(2*Math.PI*frequency/w)*sampling;
+  sampling=Math.max(1,Math.round(sampling));
+  const spacing=h/lineCount;  // vertical distance between lines
   const paths=[];
+
   for(let li=0;li<lineCount;li++){
-    const y0=(li+0.5)*rowSpacing;
-    let pts='',x=0,angle=0;
-    while(x<=w+sampling){
-      const xc=Math.min(x,w);
-      const dark=1-sg(g,w,h,xc,y0);
-      const py=y0+Math.sin(angle)*dark*maxAmp;
-      pts+=(pts===''?`M${xc.toFixed(1)},${py.toFixed(1)}`:`L${xc.toFixed(1)},${py.toFixed(1)}`);
-      angle+=angleStep;x+=sampling;
+    const y0=Math.round((li+0.5)*spacing);
+    let pts='';
+    for(let x=0;x<=w;x+=sampling){
+      // brightness 0-255 from gray (g is 0-1, convert)
+      const br=sg(g,w,h,x,y0)*255;
+      const r=(255-br)/lineCount*amplitude;
+      const a=(255-br)/frequency;
+      const py=y0+Math.sin(a)*r;
+      pts+=(pts===''?`M${x},${py.toFixed(2)}`:`L${x},${py.toFixed(2)}`);
     }
     if(pts)paths.push(pts);
   }
   return paths;
 }
 
-function sqV(g,w,h,{lineCount,frequency,amplitude,sampling}){
+function sqV(g,w,h,{lineCount,amplitude,frequency,sampling}){
+  // Same algorithm rotated 90°: columns instead of rows
   lineCount=Math.max(1,Math.round(lineCount));
-  sampling=Math.max(0.5,+sampling);
-  const colSp=w/lineCount;
-  const maxAmp=colSp*amplitude*0.5;
-  const angleStep=(2*Math.PI*frequency/h)*sampling;
+  sampling=Math.max(1,Math.round(sampling));
+  const spacing=w/lineCount;
   const paths=[];
+
   for(let li=0;li<lineCount;li++){
-    const x0=(li+0.5)*colSp;
-    let pts='',y=0,angle=0;
-    while(y<=h+sampling){
-      const yc=Math.min(y,h);
-      const dark=1-sg(g,w,h,x0,yc);
-      const px=x0+Math.sin(angle)*dark*maxAmp;
-      pts+=(pts===''?`M${px.toFixed(1)},${yc.toFixed(1)}`:`L${px.toFixed(1)},${yc.toFixed(1)}`);
-      angle+=angleStep;y+=sampling;
+    const x0=Math.round((li+0.5)*spacing);
+    let pts='';
+    for(let y=0;y<=h;y+=sampling){
+      const br=sg(g,w,h,x0,y)*255;
+      const r=(255-br)/lineCount*amplitude;
+      const a=(255-br)/frequency;
+      const px=x0+Math.sin(a)*r;
+      pts+=(pts===''?`M${px.toFixed(2)},${y}`:`L${px.toFixed(2)},${y}`);
     }
     if(pts)paths.push(pts);
   }
   return paths;
 }
 
-function sqSpiral(g,w,h,{lineCount,frequency,amplitude,sampling}){
+function sqSpiral(g,w,h,{lineCount,amplitude,frequency,sampling}){
+  // Archimedean spiral variant: same brightness→r,a formula,
+  // but instead of horizontal lines we follow a spiral path.
+  // lineCount = number of full spiral turns
+  lineCount=Math.max(1,Math.round(lineCount));
+  sampling=Math.max(1,Math.round(sampling));
   const cx=w/2,cy=h/2,maxR=Math.min(w,h)/2;
-  const turns=Math.max(1,Math.round(lineCount));
-  const totalAngle=turns*Math.PI*2;
-  const ringSpacing=maxR/turns;
-  const dAngle=(sampling/Math.max(1,maxR))*2;
+  const totalAngle=lineCount*Math.PI*2;
+  // angular step so arc-length ≈ sampling pixels at average radius
+  const avgR=maxR/2;
+  const dAngle=sampling/Math.max(avgR,1);
   let pts='',first=true,angle=0;
-  while(angle<totalAngle){
-    const t=angle/totalAngle,r=t*maxR;
-    const bx=Math.max(0,Math.min(w-1,cx+Math.cos(angle)*r));
-    const by=Math.max(0,Math.min(h-1,cy+Math.sin(angle)*r));
-    const dark=1-sg(g,w,h,bx,by);
-    const ripple=Math.sin(angle*frequency)*dark*ringSpacing*amplitude*0.5;
-    const rr=r+ripple;
-    const px=cx+Math.cos(angle)*rr,py=cy+Math.sin(angle)*rr;
-    pts+=(first?`M${px.toFixed(1)},${py.toFixed(1)}`:`L${px.toFixed(1)},${py.toFixed(1)}`);
-    first=false;angle+=dAngle;
+
+  while(angle<=totalAngle){
+    const t=angle/totalAngle;
+    const baseR=t*maxR;
+    const sx=cx+Math.cos(angle)*baseR;
+    const sy=cy+Math.sin(angle)*baseR;
+    if(sx>=0&&sx<w&&sy>=0&&sy<h){
+      const br=sg(g,w,h,sx,sy)*255;
+      const r=(255-br)/lineCount*amplitude;
+      const a=(255-br)/frequency;
+      const rr=baseR+Math.sin(a)*r;
+      const px=cx+Math.cos(angle)*rr;
+      const py=cy+Math.sin(angle)*rr;
+      pts+=(first?`M${px.toFixed(2)},${py.toFixed(2)}`:`L${px.toFixed(2)},${py.toFixed(2)}`);
+      first=false;
+    }
+    angle+=dAngle;
   }
   return pts?[pts]:[];
 }
