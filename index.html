@@ -85,15 +85,6 @@ input[type=range]{cursor:pointer}
 #panel{flex-shrink:0;display:flex;flex-direction:column;
   background:var(--bg2);border-top:1px solid var(--border)}
 
-/* 
-   MOBILE LAYOUT — panel contains:
-   1. algo controls (mode row + param label + slider) — only when algo tab active
-   2. content area (scrollable, edit or export)
-   3. bottom nav
-   
-   The preview-area flex:1 automatically takes remaining height.
-*/
-
 /* algo controls strip */
 #algo-strip{flex-shrink:0;display:flex;flex-direction:column}
 
@@ -486,11 +477,7 @@ const S={
   activeParamIdx:0,activeSection:'edit',
 };
 
-// ── PARAM DEFS — exact SquiggleCam parameters ──
-// lineCount: 10–200  = number of horizontal lines
-// amplitude: 1–50    = wave height factor  (r = (255-br)/lineCount * amplitude)
-// frequency: 5–256   = angle divisor       (a = (255-br)/frequency)
-// sampling:  1–10    = pixel step along x (spacing between points)
+// ── PARAM DEFS 
 const PDEFS={
   'squiggle-h':[
     {id:'lineCount', label:'Vonalak száma', min:10,  max:200, step:1,   def:80},
@@ -521,17 +508,14 @@ const PDEFS={
 const $=id=>document.getElementById(id);
 const pa=$('preview-area'),pc=$('preview-canvas'),ctx=pc.getContext('2d'),sp=$('spinner');
 
-// ══════════════════════════════════════════
 function init(){
   setupFile();setupNav();setupEdit();setupExport();
   buildDesktopCards();initParams('squiggle-h');setupPreviewTap();
-  // wire mobile algo mode buttons
   document.querySelectorAll('#mode-row .mode-btn[data-algo]').forEach(b=>{
     b.onclick=()=>selectAlgo(b.dataset.algo);
   });
 }
 
-// ── FILE ─────────────────────────────────
 function setupFile(){
   $('btn-choose').onclick=()=>{$('fi0').value='';$('fi0').click()};
   $('fi0').onchange=e=>{if(e.target.files[0])loadFile(e.target.files[0])};
@@ -562,7 +546,6 @@ function toData(img){
   c.getContext('2d').drawImage(img,0,0);return c.getContext('2d').getImageData(0,0,c.width,c.height);
 }
 
-// ── NAV ──────────────────────────────────
 function setupNav(){
   document.querySelectorAll('#bottom-nav .nav-btn').forEach(b=>b.onclick=()=>switchSec(b.dataset.sec));
   document.querySelectorAll('#d-tabs .dtab').forEach(b=>b.onclick=()=>switchSec(b.dataset.sec));
@@ -570,22 +553,16 @@ function setupNav(){
 }
 function switchSec(sec){
   S.activeSection=sec;
-  // nav btns
   document.querySelectorAll('#bottom-nav .nav-btn').forEach(b=>b.classList.toggle('active',b.dataset.sec===sec));
   document.querySelectorAll('#d-tabs .dtab').forEach(b=>b.classList.toggle('active',b.dataset.sec===sec));
   const isMobile=window.innerWidth<768;
-  // content panels
   $('cp-edit').classList.toggle('active',sec==='edit');
   $('cp-export').classList.toggle('active',sec==='export');
-  // content-area visible for edit+export; hidden on mobile for algo
   $('content-area').style.display=(isMobile&&sec==='algo')?'none':'';
-  // mobile algo strip
   $('algo-strip').classList.toggle('hidden',!(isMobile&&sec==='algo'));
-  // desktop algo panel
   $('d-algo').style.display=(!isMobile&&sec==='algo')?'flex':'none';
 }
 
-// ── PREVIEW TAP → FULLSCREEN ─────────────
 function setupPreviewTap(){
   pa.onclick=()=>{
     if(!S.processed)return;
@@ -600,7 +577,6 @@ function setupPreviewTap(){
   $('preview-fs').onclick=()=>$('preview-fs').classList.add('hidden');
 }
 
-// ── EDIT ─────────────────────────────────
 function setupEdit(){
   $('btn-rotl').onclick=()=>{if(!S.cropped)return;S.cropped=rotData(S.cropped,-90);S.paths=null;applyToneAndDraw();scheduleRender()};
   $('btn-rotr').onclick=()=>{if(!S.cropped)return;S.cropped=rotData(S.cropped,90);S.paths=null;applyToneAndDraw();scheduleRender()};
@@ -636,7 +612,6 @@ function flipData(d){
   cx.drawImage(t,0,0);return cx.getImageData(0,0,w,h);
 }
 
-// ── TONE ─────────────────────────────────
 function applyTone(id){
   const{brightness,contrast,blackPoint,whitePoint,gamma}=S.tone;
   const src=id.data,out=new ImageData(id.width,id.height),d=out.data;
@@ -657,7 +632,6 @@ function applyToneAndDraw(){
   ctx.clearRect(0,0,pc.width,pc.height);ctx.drawImage(t,0,0,pc.width,pc.height);
 }
 
-// ── PARAMS ────────────────────────────────
 function initParams(algo){
   const defs=PDEFS[algo]||[];
   S.params={};defs.forEach(p=>S.params[p.id]=p.def);
@@ -690,7 +664,6 @@ function setMainSlider(algo,idx){
   ns.oninput=()=>{
     const v=parseFloat(ns.value);S.params[p.id]=v;
     $('sl-val').textContent=fmt(p,v);
-    // sync desktop
     const dsl=document.querySelector(`#d-params .d-psl[data-pid="${p.id}"]`);
     if(dsl){dsl.value=v;const pv=dsl.parentElement.querySelector('.d-pv');if(pv)pv.textContent=fmt(p,v);}
     scheduleRender();
@@ -723,7 +696,6 @@ function buildDesktopParams(algo){
     sl.oninput=()=>{
       const v=parseFloat(sl.value);S.params[p.id]=v;
       row.querySelector('.d-pv').textContent=fmt(p,v);
-      // sync mobile if active
       if(S.activeParamIdx===(PDEFS[algo]||[]).indexOf(p)){const ms=$('main-sl');if(ms){ms.value=v;$('sl-val').textContent=fmt(p,v);}}
       scheduleRender();
     };
@@ -736,7 +708,6 @@ function selectAlgo(algo){
   initParams(algo);scheduleRender();
 }
 
-// ── RENDER ────────────────────────────────
 let rTimer=null;
 function scheduleRender(){clearTimeout(rTimer);rTimer=setTimeout(runRender,300);}
 function runRender(){
@@ -749,7 +720,6 @@ function runRender(){
   },16);
 }
 
-// ── GRAY ──────────────────────────────────
 function getGray(id){
   const{width:w,height:h,data:d}=id;
   const g=new Float32Array(w*h);
@@ -759,19 +729,10 @@ function getGray(id){
 function sg(g,w,h,x,y){return g[Math.max(0,Math.min(h-1,y|0))*w+Math.max(0,Math.min(w-1,x|0))];}
 
 // ══════════════════════════════════════════
-// EXACT SquiggleCam ALGORITHM
-// Source: https://github.com/msurguy/SquiggleCam README
-//
-// For each horizontal line y (step = imageHeight / lineCount):
-//   For each x from 0 to imageWidth step SAMPLING:
-//     br = brightness of pixel at (x, y)   [0–255]
-//     r  = (255 - br) / lineCount * amplitude   ← wave radius/height
-//     a  = (255 - br) / frequency               ← wave angle (NOT cumulative!)
-//     pointY = y + sin(a) * r
-//
-// Key: angle `a` is re-computed per pixel from brightness.
-// Dark pixel (br≈0)  → large r, large a → strong sine deflection
-// Light pixel (br≈255) → r=0, a=0      → stays on the baseline
+// FIXED SquiggleCam ALGORITHMS
+// A fázisnak (a) kumulatívnak kell lennie a folyamatos hullámhoz!
+// A sötétebb pixeleknél a fázis gyorsabban nő (sűrűbb hullám),
+// és az amplitúdó is megnő, pont ahogy a hivatkozott repóban.
 // ══════════════════════════════════════════
 function renderAlgo(imgData,algo,params){
   const{g,w,h}=getGray(imgData);
@@ -785,19 +746,25 @@ function renderAlgo(imgData,algo,params){
 function sqH(g,w,h,{lineCount,amplitude,frequency,sampling}){
   lineCount=Math.max(1,Math.round(lineCount));
   sampling=Math.max(1,Math.round(sampling));
-  const spacing=h/lineCount;  // vertical distance between lines
+  const spacing=h/lineCount;
   const paths=[];
 
   for(let li=0;li<lineCount;li++){
-    const y0=Math.round((li+0.5)*spacing);
+    const y0=(li+0.5)*spacing;
     let pts='';
+    let a=0; // Kumulatív fázis a hullámzáshoz
     for(let x=0;x<=w;x+=sampling){
-      // brightness 0-255 from gray (g is 0-1, convert)
       const br=sg(g,w,h,x,y0)*255;
-      const r=(255-br)/lineCount*amplitude;
-      const a=(255-br)/frequency;
-      const py=y0+Math.sin(a)*r;
-      pts+=(pts===''?`M${x},${py.toFixed(2)}`:`L${x},${py.toFixed(2)}`);
+      const dark=(255-br)/255; // 0.0 (világos) -> 1.0 (sötét)
+      
+      // Fázis növelése: sötét területeken gyorsabban nő -> sűrűbb hullám
+      a += dark * (frequency / 50) * sampling;
+      
+      // Amplitúdó: sötét helyeken a hullám kilengése nagyobb
+      const r = dark * amplitude;
+      
+      const py = y0 + Math.sin(a) * r;
+      pts += (pts==='' ? `M${x},${py.toFixed(2)}` : ` L${x},${py.toFixed(2)}`);
     }
     if(pts)paths.push(pts);
   }
@@ -805,21 +772,24 @@ function sqH(g,w,h,{lineCount,amplitude,frequency,sampling}){
 }
 
 function sqV(g,w,h,{lineCount,amplitude,frequency,sampling}){
-  // Same algorithm rotated 90°: columns instead of rows
   lineCount=Math.max(1,Math.round(lineCount));
   sampling=Math.max(1,Math.round(sampling));
   const spacing=w/lineCount;
   const paths=[];
 
   for(let li=0;li<lineCount;li++){
-    const x0=Math.round((li+0.5)*spacing);
+    const x0=(li+0.5)*spacing;
     let pts='';
+    let a=0; 
     for(let y=0;y<=h;y+=sampling){
       const br=sg(g,w,h,x0,y)*255;
-      const r=(255-br)/lineCount*amplitude;
-      const a=(255-br)/frequency;
-      const px=x0+Math.sin(a)*r;
-      pts+=(pts===''?`M${px.toFixed(2)},${y}`:`L${px.toFixed(2)},${y}`);
+      const dark=(255-br)/255;
+      
+      a += dark * (frequency / 50) * sampling;
+      const r = dark * amplitude;
+      
+      const px = x0 + Math.sin(a) * r;
+      pts += (pts==='' ? `M${px.toFixed(2)},${y}` : ` L${px.toFixed(2)},${y}`);
     }
     if(pts)paths.push(pts);
   }
@@ -827,39 +797,48 @@ function sqV(g,w,h,{lineCount,amplitude,frequency,sampling}){
 }
 
 function sqSpiral(g,w,h,{lineCount,amplitude,frequency,sampling}){
-  // Archimedean spiral variant: same brightness→r,a formula,
-  // but instead of horizontal lines we follow a spiral path.
-  // lineCount = number of full spiral turns
   lineCount=Math.max(1,Math.round(lineCount));
   sampling=Math.max(1,Math.round(sampling));
-  const cx=w/2,cy=h/2,maxR=Math.min(w,h)/2;
+  const cx=w/2, cy=h/2, maxR=Math.min(w,h)/2;
   const totalAngle=lineCount*Math.PI*2;
-  // angular step so arc-length ≈ sampling pixels at average radius
-  const avgR=maxR/2;
-  const dAngle=sampling/Math.max(avgR,1);
-  let pts='',first=true,angle=0;
-
-  while(angle<=totalAngle){
-    const t=angle/totalAngle;
-    const baseR=t*maxR;
-    const sx=cx+Math.cos(angle)*baseR;
-    const sy=cy+Math.sin(angle)*baseR;
-    if(sx>=0&&sx<w&&sy>=0&&sy<h){
+  
+  let pts='';
+  let a=0; 
+  let angle=0;
+  let first=true;
+  
+  while(angle <= totalAngle){
+    const t = angle/totalAngle;
+    const baseR = t*maxR;
+    const sx = cx + Math.cos(angle)*baseR;
+    const sy = cy + Math.sin(angle)*baseR;
+    
+    // Dinamikus szög-lépésköz (így a vonal ívhossza pixelben kb. 'sampling' lesz).
+    // A közepe felé haladva maximalizáljuk (0.5 rad), nehogy letöréshibákat kapjunk.
+    const dAngle = Math.min(sampling / Math.max(baseR, 1), 0.5);
+    
+    if(sx>=0 && sx<w && sy>=0 && sy<h){
       const br=sg(g,w,h,sx,sy)*255;
-      const r=(255-br)/lineCount*amplitude;
-      const a=(255-br)/frequency;
-      const rr=baseR+Math.sin(a)*r;
-      const px=cx+Math.cos(angle)*rr;
-      const py=cy+Math.sin(angle)*rr;
-      pts+=(first?`M${px.toFixed(2)},${py.toFixed(2)}`:`L${px.toFixed(2)},${py.toFixed(2)}`);
+      const dark=(255-br)/255;
+      
+      const arcLen = Math.max(baseR * dAngle, 1);
+      a += dark * (frequency / 50) * arcLen;
+      
+      const r = dark * amplitude;
+      const rr = baseR + Math.sin(a) * r;
+      const px = cx + Math.cos(angle)*rr;
+      const py = cy + Math.sin(angle)*rr;
+      
+      pts += (first ? `M${px.toFixed(2)},${py.toFixed(2)}` : ` L${px.toFixed(2)},${py.toFixed(2)}`);
       first=false;
+    } else {
+      first=true; // Ha kilép a képből, a visszatéréskor új szakasz indul (új MoveTo paranccsal)
     }
-    angle+=dAngle;
+    angle += dAngle;
   }
   return pts?[pts]:[];
 }
 
-// ── DRAW ──────────────────────────────────
 function drawPaths(paths,imgW,imgH){
   const mxW=pa.clientWidth||600,mxH=pa.clientHeight||600;
   const sc=Math.min(mxW/imgW,mxH/imgH,1);
@@ -872,7 +851,6 @@ function drawPaths(paths,imgW,imgH){
   ctx.restore();
 }
 
-// ── CROP ─────────────────────────────────
 let CS={};
 function openCrop(){
   if(!S.cropped)return;
@@ -920,7 +898,6 @@ function applyCrop(){
   $('crop-modal').classList.add('hidden');applyToneAndDraw();scheduleRender();
 }
 
-// ── EXPORT ────────────────────────────────
 function setupExport(){
   document.querySelectorAll('.pb').forEach(b=>b.onclick=()=>{document.querySelectorAll('.pb').forEach(x=>x.classList.remove('active'));b.classList.add('active');S.paper.w=parseInt(b.dataset.pw);S.paper.h=parseInt(b.dataset.ph);});
   $('sl-margin').oninput=e=>{S.paper.margin=parseInt(e.target.value);$('mv-margin').textContent=e.target.value;};
@@ -954,7 +931,6 @@ function expRaster(fmt){
 }
 function dl(blob,name){const u=URL.createObjectURL(blob),a=document.createElement('a');a.href=u;a.download=name;a.click();setTimeout(()=>URL.revokeObjectURL(u),1000);toast('✓ '+name);}
 
-// ── UTILS ─────────────────────────────────
 let _tt;
 function toast(msg){const t=$('toast');t.textContent=msg;t.classList.add('show');clearTimeout(_tt);_tt=setTimeout(()=>t.classList.remove('show'),2500);}
 const _dbt={};
