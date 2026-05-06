@@ -50,7 +50,6 @@ input[type=range]{cursor:pointer}
 /* ──────────── EDITOR ──────────── */
 #editor{position:fixed;inset:0;display:flex;flex-direction:column;background:var(--bg)}
 
-/* top bar (mobile only) */
 #topbar{height:var(--topbar);flex-shrink:0;display:flex;align-items:center;
   justify-content:space-between;padding:0 12px;
   background:var(--bg2);border-bottom:1px solid var(--border)}
@@ -60,7 +59,6 @@ input[type=range]{cursor:pointer}
 .tb-btn:hover{border-color:var(--border2);color:var(--fg)}
 .tb-title{font-size:14px;font-weight:700;letter-spacing:-.3px}
 
-/* preview — fills all space between topbar and panel */
 #preview-area{
   flex:1;min-height:0;position:relative;overflow:hidden;
   display:flex;align-items:center;justify-content:center;
@@ -76,19 +74,14 @@ input[type=range]{cursor:pointer}
   border-radius:50%;animation:sp .7s linear infinite}
 @keyframes sp{to{transform:rotate(360deg)}}
 
-/* fullscreen overlay */
 #preview-fs{position:fixed;inset:0;z-index:300;background:#000;
   display:flex;align-items:center;justify-content:center;cursor:pointer}
 #preview-fs canvas{max-width:100%;max-height:100%;display:block}
 
-/* ──── PANEL (below preview on mobile, right side on desktop) ──── */
 #panel{flex-shrink:0;display:flex;flex-direction:column;
   background:var(--bg2);border-top:1px solid var(--border)}
 
-/* algo controls strip */
 #algo-strip{flex-shrink:0;display:flex;flex-direction:column}
-
-/* mode row */
 #mode-row{display:flex;align-items:center;padding:4px 8px;gap:3px;
   border-bottom:1px solid var(--border);overflow-x:auto;scrollbar-width:none;
   flex-shrink:0;min-height:52px}
@@ -103,12 +96,10 @@ input[type=range]{cursor:pointer}
 .mode-btn.active{border-color:var(--accent);background:var(--acc-bg);color:var(--accent)}
 .mode-sep{width:1px;height:32px;background:var(--border);flex-shrink:0;margin:0 3px}
 
-/* param label */
 #param-lbl-row{height:22px;flex-shrink:0;display:flex;align-items:center;justify-content:center;
   font-size:10px;font-family:var(--mono);color:var(--fg-muted);letter-spacing:.8px;
   text-transform:uppercase;border-bottom:1px solid var(--border)}
 
-/* main slider row */
 #main-sl-row{height:46px;flex-shrink:0;display:flex;align-items:center;
   padding:0 14px;gap:10px;border-bottom:1px solid var(--border)}
 .sle{font-size:10px;font-family:var(--mono);color:var(--fg-dim);flex-shrink:0;width:26px}
@@ -121,12 +112,10 @@ input[type=range]{cursor:pointer}
   background:var(--accent);border:3px solid var(--bg2)}
 #sl-val{font-size:13px;font-family:var(--mono);color:var(--accent);width:40px;text-align:right;flex-shrink:0}
 
-/* scrollable content */
 #content-area{overflow-y:auto;scrollbar-width:thin;scrollbar-color:var(--border2) transparent}
 #content-area::-webkit-scrollbar{width:3px}
 #content-area::-webkit-scrollbar-thumb{background:var(--border2);border-radius:2px}
 
-/* bottom nav */
 #bottom-nav{height:var(--nav);flex-shrink:0;display:flex;
   border-top:1px solid var(--border)}
 .nav-btn{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;
@@ -136,12 +125,10 @@ input[type=range]{cursor:pointer}
 .nav-btn:hover{color:var(--fg-muted)}
 .nav-btn.active{color:var(--accent);border-top-color:var(--accent)}
 
-/* ──── CONTENT PANELS ──── */
 .cpanel{display:none;padding:10px 12px;flex-direction:column;gap:10px}
 .cpanel.active{display:flex}
 .clbl{font-size:10px;font-family:var(--mono);color:var(--fg-dim);
   text-transform:uppercase;letter-spacing:.9px;margin-bottom:4px}
-/* edit */
 .btn-row{display:flex;gap:5px;flex-wrap:wrap}
 .e-btn{flex:1;min-width:58px;padding:8px 4px;border-radius:6px;
   background:var(--bg3);border:1px solid var(--border);
@@ -163,7 +150,7 @@ input[type=range]{cursor:pointer}
   padding:5px 12px;color:var(--fg-muted);font-size:11px;font-family:var(--mono);
   transition:.15s;align-self:flex-start}
 .btn-ghost:hover{border-color:var(--border2);color:var(--fg)}
-/* export */
+
 .fmt-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:5px}
 .fc{cursor:pointer}.fc input{display:none}
 .fi{display:flex;flex-direction:column;align-items:center;gap:2px;padding:9px 4px;
@@ -191,25 +178,21 @@ input[type=range]{cursor:pointer}
   display:flex;align-items:center;justify-content:center;gap:8px;transition:.15s}
 .btn-exp:hover{background:#f3ff60}
 
-/* ──────────── DESKTOP ──────────── */
 @media(min-width:768px){
   #editor{flex-direction:row}
   #topbar{display:none}
   #preview-area{flex:1;height:100%}
   #panel{width:300px;height:100%;border-top:none;border-left:1px solid var(--border);
     flex-direction:column;overflow:hidden}
-  /* desktop header */
   #d-hdr{height:52px;display:flex;align-items:center;padding:0 14px;gap:8px;
     border-bottom:1px solid var(--border);flex-shrink:0}
   #d-hdr .dh-t{font-size:15px;font-weight:800;letter-spacing:-.5px;flex:1}
-  /* desktop tabs */
   #d-tabs{display:flex;border-bottom:1px solid var(--border);flex-shrink:0}
   .dtab{flex:1;padding:8px 4px;background:transparent;border:none;
     border-bottom:2px solid transparent;color:var(--fg-muted);font-size:10px;font-family:var(--mono);
     display:flex;align-items:center;justify-content:center;gap:4px;transition:.15s;margin-bottom:-1px}
   .dtab.active{color:var(--accent);border-bottom-color:var(--accent)}
   .dtab:hover{color:var(--fg)}
-  /* desktop algo panel */
   #d-algo{display:none;flex:1;overflow-y:auto;min-height:0;flex-direction:column}
   .d-ac-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:5px;padding:10px 12px}
   .dac{display:flex;flex-direction:column;align-items:center;gap:3px;padding:8px 4px;
@@ -230,10 +213,8 @@ input[type=range]{cursor:pointer}
     border-radius:50%;background:var(--accent);box-shadow:0 0 0 2px var(--bg2)}
   .d-psl::-moz-range-thumb{width:14px;height:14px;border-radius:50%;
     background:var(--accent);border:2px solid var(--bg2)}
-  /* hide mobile-only */
   #algo-strip{display:none}
   #bottom-nav{display:none}
-  /* content area fills rest */
   #content-area{flex:1;min-height:0}
 }
 @media(max-width:767px){
@@ -242,7 +223,6 @@ input[type=range]{cursor:pointer}
   #d-algo{display:none!important}
 }
 
-/* ──────────── CROP ──────────── */
 #crop-modal{position:fixed;inset:0;z-index:400;display:flex;flex-direction:column;
   background:rgba(0,0,0,.92)}
 #crop-bg{position:absolute;inset:0;pointer-events:none}
@@ -269,7 +249,6 @@ input[type=range]{cursor:pointer}
 .cact.apply{background:var(--accent);color:#0e0e0f}
 .cact.apply:hover{background:#f3ff60}
 
-/* toast */
 #toast{position:fixed;bottom:calc(var(--nav)+10px);left:50%;
   transform:translateX(-50%) translateY(6px);
   background:var(--bg3);border:1px solid var(--border2);border-radius:6px;
@@ -281,7 +260,6 @@ input[type=range]{cursor:pointer}
 </head>
 <body>
 
-<!-- LANDING -->
 <div id="landing">
   <div class="ll">
     <svg width="60" height="60" viewBox="0 0 60 60" fill="none">
@@ -312,9 +290,7 @@ input[type=range]{cursor:pointer}
   <input type="file" id="fi0" accept="image/*" style="display:none">
 </div>
 
-<!-- EDITOR -->
 <div id="editor" class="hidden">
-  <!-- Mobile top bar -->
   <div id="topbar">
     <button class="tb-btn" id="btn-back"><svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M10 3L5 8l5 5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
     <span class="tb-title">LeonarDraw</span>
@@ -322,16 +298,12 @@ input[type=range]{cursor:pointer}
   </div>
   <input type="file" id="fi1" accept="image/*" style="display:none">
 
-  <!-- PREVIEW -->
   <div id="preview-area">
     <canvas id="preview-canvas"></canvas>
     <div class="spin hidden" id="spinner"><div class="sring"></div></div>
   </div>
 
-  <!-- PANEL -->
   <div id="panel">
-
-    <!-- Desktop header + tabs -->
     <div id="d-hdr">
       <div class="dh-t">LeonarDraw</div>
       <button class="tb-btn" id="btn-back-d"><svg width="15" height="15" viewBox="0 0 15 15" fill="none"><path d="M9 3L4 7.5 9 12" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
@@ -343,14 +315,12 @@ input[type=range]{cursor:pointer}
       <button class="dtab" data-sec="export">↑ Export</button>
     </div>
 
-    <!-- Desktop algo panel -->
     <div id="d-algo">
       <div class="d-ac-grid" id="d-ac-grid"></div>
       <div class="d-plbl">Paraméterek</div>
       <div class="d-params" id="d-params"></div>
     </div>
 
-    <!-- Mobile algo strip (mode row + param label + slider) -->
     <div id="algo-strip" class="hidden">
       <div id="mode-row">
         <button class="mode-btn active" data-algo="squiggle-h">
@@ -381,9 +351,7 @@ input[type=range]{cursor:pointer}
       </div>
     </div>
 
-    <!-- Scrollable content area (edit + export) -->
     <div id="content-area">
-      <!-- EDIT -->
       <div class="cpanel active" id="cp-edit">
         <div>
           <div class="clbl">Vágás &amp; Forgatás</div>
@@ -406,7 +374,6 @@ input[type=range]{cursor:pointer}
           <button class="btn-ghost" id="btn-reset-tone" style="margin-top:8px">Visszaállítás</button>
         </div>
       </div>
-      <!-- EXPORT -->
       <div class="cpanel" id="cp-export">
         <div><div class="clbl">Formátum</div>
           <div class="fmt-grid">
@@ -428,7 +395,6 @@ input[type=range]{cursor:pointer}
       </div>
     </div>
 
-    <!-- Mobile bottom nav -->
     <div id="bottom-nav">
       <button class="nav-btn active" data-sec="edit"><svg width="19" height="19" viewBox="0 0 19 19" fill="none"><path d="M3 13.5V16h2.5L14 7.5l-2.5-2.5L3 13.5zM15.5 5a.7.7 0 000-1L14 2.5a.7.7 0 00-1 0L11.8 3.7l2.5 2.5L15.5 5z" fill="currentColor"/></svg>Szerkesztés</button>
       <button class="nav-btn" data-sec="algo"><svg width="19" height="19" viewBox="0 0 19 19" fill="none"><path d="M1 6.5 Q4.5 2 8 6.5 Q11.5 11 15 6.5 Q17 4.5 18 6.5" stroke="currentColor" stroke-width="1.5" fill="none" stroke-linecap="round"/><path d="M1 12.5 Q4.5 8 8 12.5 Q11.5 17 15 12.5 Q17 10.5 18 12.5" stroke="currentColor" stroke-width="1.5" fill="none" stroke-linecap="round"/></svg>Algoritmus</button>
@@ -437,7 +403,6 @@ input[type=range]{cursor:pointer}
   </div>
 </div>
 
-<!-- CROP MODAL -->
 <div id="crop-modal" class="hidden">
   <canvas id="crop-bg"></canvas>
   <div id="crop-region">
@@ -459,7 +424,6 @@ input[type=range]{cursor:pointer}
   </div>
 </div>
 
-<!-- Fullscreen -->
 <div id="preview-fs" class="hidden"><canvas id="fs-canvas"></canvas></div>
 <div id="toast"></div>
 
@@ -471,37 +435,37 @@ input[type=range]{cursor:pointer}
 const S={
   original:null,cropped:null,processed:null,paths:null,
   algo:'squiggle-h',
-  params:{lineCount:80,frequency:40,amplitude:1.0,sampling:2},
+  params:{lineCount:80,frequency:50,amplitude:5,sampling:2},
   tone:{brightness:0,contrast:0,blackPoint:0,whitePoint:255,gamma:1.0},
   paper:{w:210,h:297,margin:10},
   activeParamIdx:0,activeSection:'edit',
 };
 
-// ── PARAM DEFS 
+// ── PARAM DEFS (Javított, a leskálázáshoz optimalizált értékekkel)
 const PDEFS={
   'squiggle-h':[
     {id:'lineCount', label:'Vonalak száma', min:10,  max:200, step:1,   def:80},
-    {id:'amplitude', label:'Amplitúdó',    min:1,   max:50,  step:1,   def:10},
-    {id:'frequency', label:'Frekvencia',   min:5,   max:256, step:1,   def:60},
-    {id:'sampling',  label:'Mintavétel',   min:1,   max:10,  step:1,   def:3},
+    {id:'amplitude', label:'Amplitúdó',    min:1,   max:100, step:1,   def:5},
+    {id:'frequency', label:'Frekvencia',   min:5,   max:256, step:1,   def:50},
+    {id:'sampling',  label:'Mintavétel',   min:1,   max:10,  step:1,   def:2},
   ],
   'squiggle-v':[
     {id:'lineCount', label:'Vonalak száma', min:10,  max:200, step:1,   def:80},
-    {id:'amplitude', label:'Amplitúdó',    min:1,   max:50,  step:1,   def:10},
-    {id:'frequency', label:'Frekvencia',   min:5,   max:256, step:1,   def:60},
-    {id:'sampling',  label:'Mintavétel',   min:1,   max:10,  step:1,   def:3},
+    {id:'amplitude', label:'Amplitúdó',    min:1,   max:100, step:1,   def:5},
+    {id:'frequency', label:'Frekvencia',   min:5,   max:256, step:1,   def:50},
+    {id:'sampling',  label:'Mintavétel',   min:1,   max:10,  step:1,   def:2},
   ],
   'squiggle-both':[
-    {id:'lineCount', label:'Vonalak száma', min:10,  max:200, step:1,   def:60},
-    {id:'amplitude', label:'Amplitúdó',    min:1,   max:50,  step:1,   def:10},
-    {id:'frequency', label:'Frekvencia',   min:5,   max:256, step:1,   def:60},
-    {id:'sampling',  label:'Mintavétel',   min:1,   max:10,  step:1,   def:3},
+    {id:'lineCount', label:'Vonalak száma', min:10,  max:200, step:1,   def:50},
+    {id:'amplitude', label:'Amplitúdó',    min:1,   max:100, step:1,   def:4},
+    {id:'frequency', label:'Frekvencia',   min:5,   max:256, step:1,   def:50},
+    {id:'sampling',  label:'Mintavétel',   min:1,   max:10,  step:1,   def:2},
   ],
   'spiral':[
-    {id:'lineCount', label:'Körök száma',   min:10,  max:300, step:1,   def:120},
-    {id:'amplitude', label:'Amplitúdó',    min:1,   max:50,  step:1,   def:10},
-    {id:'frequency', label:'Frekvencia',   min:5,   max:256, step:1,   def:60},
-    {id:'sampling',  label:'Mintavétel',   min:1,   max:10,  step:1,   def:3},
+    {id:'lineCount', label:'Körök száma',   min:10,  max:300, step:1,   def:100},
+    {id:'amplitude', label:'Amplitúdó',    min:1,   max:100, step:1,   def:5},
+    {id:'frequency', label:'Frekvencia',   min:5,   max:256, step:1,   def:50},
+    {id:'sampling',  label:'Mintavétel',   min:1,   max:10,  step:1,   def:2},
   ],
 };
 
@@ -621,15 +585,51 @@ function applyTone(id){
   for(let i=0;i<src.length;i+=4){d[i]=lut[src[i]];d[i+1]=lut[src[i+1]];d[i+2]=lut[src[i+2]];d[i+3]=src[i+3];}
   return out;
 }
+
+// ══════════════════════════════════════════
+// VÁLTOZÁS: SKÁLÁZÁS MAX 800 PIXELRE
+// Így a paraméterek konstans méreten operálnak.
+// ══════════════════════════════════════════
 function applyToneAndDraw(){
   if(!S.cropped)return;
-  S.processed=applyTone(S.cropped);
-  const img=S.processed,mxW=pa.clientWidth||400,mxH=pa.clientHeight||400;
-  const sc=Math.min(mxW/img.width,mxH/img.height,1);
-  pc.width=Math.round(img.width*sc);pc.height=Math.round(img.height*sc);
-  const t=document.createElement('canvas');t.width=img.width;t.height=img.height;
-  t.getContext('2d').putImageData(img,0,0);
-  ctx.clearRect(0,0,pc.width,pc.height);ctx.drawImage(t,0,0,pc.width,pc.height);
+  
+  // 1. Az eredeti (levágott) kép méretének csökkentése feldolgozás előtt
+  const MAX_DIM = 800;
+  let cw = S.cropped.width;
+  let ch = S.cropped.height;
+  
+  if(cw > MAX_DIM || ch > MAX_DIM) {
+    const scale = Math.min(MAX_DIM/cw, MAX_DIM/ch);
+    cw = Math.round(cw * scale);
+    ch = Math.round(ch * scale);
+  }
+  
+  const tempC = document.createElement('canvas');
+  tempC.width = cw; tempC.height = ch;
+  const tempCtx = tempC.getContext('2d');
+  
+  const oc = document.createElement('canvas');
+  oc.width = S.cropped.width; oc.height = S.cropped.height;
+  oc.getContext('2d').putImageData(S.cropped, 0, 0);
+  
+  // A Canvas API gyönyörűen, élsimítva átméretezi
+  tempCtx.drawImage(oc, 0, 0, cw, ch);
+  const scaledData = tempCtx.getImageData(0, 0, cw, ch);
+  
+  // 2. Erre a 800px-es adatra hajtjuk végre a tónusokat
+  S.processed = applyTone(scaledData);
+  
+  const img = S.processed;
+  const mxW = pa.clientWidth || 400, mxH = pa.clientHeight || 400;
+  const sc = Math.min(mxW/img.width, mxH/img.height, 1);
+  
+  pc.width = Math.round(img.width*sc); pc.height = Math.round(img.height*sc);
+  
+  const t = document.createElement('canvas');
+  t.width = img.width; t.height = img.height;
+  t.getContext('2d').putImageData(img, 0, 0);
+  ctx.clearRect(0,0,pc.width,pc.height);
+  ctx.drawImage(t, 0, 0, pc.width, pc.height);
 }
 
 function initParams(algo){
@@ -729,10 +729,7 @@ function getGray(id){
 function sg(g,w,h,x,y){return g[Math.max(0,Math.min(h-1,y|0))*w+Math.max(0,Math.min(w-1,x|0))];}
 
 // ══════════════════════════════════════════
-// FIXED SquiggleCam ALGORITHMS
-// A fázisnak (a) kumulatívnak kell lennie a folyamatos hullámhoz!
-// A sötétebb pixeleknél a fázis gyorsabban nő (sűrűbb hullám),
-// és az amplitúdó is megnő, pont ahogy a hivatkozott repóban.
+// FIXED SquiggleCam ALGORITHMS (Metszés és Skála visszaállítva)
 // ══════════════════════════════════════════
 function renderAlgo(imgData,algo,params){
   const{g,w,h}=getGray(imgData);
@@ -752,16 +749,18 @@ function sqH(g,w,h,{lineCount,amplitude,frequency,sampling}){
   for(let li=0;li<lineCount;li++){
     const y0=(li+0.5)*spacing;
     let pts='';
-    let a=0; // Kumulatív fázis a hullámzáshoz
+    let a=0; 
     for(let x=0;x<=w;x+=sampling){
       const br=sg(g,w,h,x,y0)*255;
-      const dark=(255-br)/255; // 0.0 (világos) -> 1.0 (sötét)
+      const dark255 = 255 - br; 
       
-      // Fázis növelése: sötét területeken gyorsabban nő -> sűrűbb hullám
-      a += dark * (frequency / 50) * sampling;
+      // Fázis növelése - ezt megszorozzuk a sampling-gel, 
+      // így a hullámsűrűség konzisztens marad különböző lépésköznél is
+      a += (dark255 / frequency) * sampling;
       
-      // Amplitúdó: sötét helyeken a hullám kilengése nagyobb
-      const r = dark * amplitude;
+      // FIGYELEM: Az eredeti képlet itt VISSZATÉRT! 
+      // Ha lineCount kicsi, az amplitúdó hatalmas lesz és METSZIK EGYMÁST a vonalak!
+      const r = (dark255 / lineCount) * amplitude;
       
       const py = y0 + Math.sin(a) * r;
       pts += (pts==='' ? `M${x},${py.toFixed(2)}` : ` L${x},${py.toFixed(2)}`);
@@ -783,10 +782,10 @@ function sqV(g,w,h,{lineCount,amplitude,frequency,sampling}){
     let a=0; 
     for(let y=0;y<=h;y+=sampling){
       const br=sg(g,w,h,x0,y)*255;
-      const dark=(255-br)/255;
+      const dark255 = 255 - br;
       
-      a += dark * (frequency / 50) * sampling;
-      const r = dark * amplitude;
+      a += (dark255 / frequency) * sampling;
+      const r = (dark255 / lineCount) * amplitude;
       
       const px = x0 + Math.sin(a) * r;
       pts += (pts==='' ? `M${px.toFixed(2)},${y}` : ` L${px.toFixed(2)},${y}`);
@@ -813,18 +812,16 @@ function sqSpiral(g,w,h,{lineCount,amplitude,frequency,sampling}){
     const sx = cx + Math.cos(angle)*baseR;
     const sy = cy + Math.sin(angle)*baseR;
     
-    // Dinamikus szög-lépésköz (így a vonal ívhossza pixelben kb. 'sampling' lesz).
-    // A közepe felé haladva maximalizáljuk (0.5 rad), nehogy letöréshibákat kapjunk.
     const dAngle = Math.min(sampling / Math.max(baseR, 1), 0.5);
     
     if(sx>=0 && sx<w && sy>=0 && sy<h){
       const br=sg(g,w,h,sx,sy)*255;
-      const dark=(255-br)/255;
+      const dark255 = 255 - br;
       
       const arcLen = Math.max(baseR * dAngle, 1);
-      a += dark * (frequency / 50) * arcLen;
+      a += (dark255 / frequency) * arcLen;
       
-      const r = dark * amplitude;
+      const r = (dark255 / lineCount) * amplitude;
       const rr = baseR + Math.sin(a) * r;
       const px = cx + Math.cos(angle)*rr;
       const py = cy + Math.sin(angle)*rr;
@@ -832,7 +829,7 @@ function sqSpiral(g,w,h,{lineCount,amplitude,frequency,sampling}){
       pts += (first ? `M${px.toFixed(2)},${py.toFixed(2)}` : ` L${px.toFixed(2)},${py.toFixed(2)}`);
       first=false;
     } else {
-      first=true; // Ha kilép a képből, a visszatéréskor új szakasz indul (új MoveTo paranccsal)
+      first=true; 
     }
     angle += dAngle;
   }
