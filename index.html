@@ -1,402 +1,1479 @@
 <!DOCTYPE html>
 <html lang="hu">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>PlotterCam</title>
-  <link rel="stylesheet" href="css/style.css">
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Syne:wght@400;600;700;800&display=swap" rel="stylesheet">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>LeonarDraw</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Syne:wght@400;600;700;800&display=swap" rel="stylesheet">
+<style>
+/* ═══════════════════════════════════════════
+   LEONARDRAW — teljes újraépítés
+════════════════════════════════════════════ */
+:root {
+  --bg:        #0e0e0f;
+  --bg2:       #161618;
+  --bg3:       #1e1e21;
+  --border:    #2a2a2e;
+  --border2:   #3a3a40;
+  --fg:        #e8e8ea;
+  --fg-muted:  #888890;
+  --fg-dim:    #55555e;
+  --accent:    #e8ff47;
+  --accent-bg: rgba(232,255,71,0.08);
+  --r:         8px;
+  --font:      'Syne', sans-serif;
+  --mono:      'DM Mono', monospace;
+  --bottom-bar-h: 56px;
+  --tool-row-h:   48px;
+  --slider-row-h: 44px;
+  --param-label-h:24px;
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html,body{width:100%;height:100%;background:var(--bg);color:var(--fg);font-family:var(--font);font-size:14px;overflow:hidden;-webkit-font-smoothing:antialiased;touch-action:none}
+button{cursor:pointer;font-family:var(--font)}
+.hidden{display:none!important}
+
+/* ════════════════════════════════════
+   LANDING
+════════════════════════════════════ */
+#landing{
+  position:fixed;inset:0;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  background:radial-gradient(ellipse 70% 50% at 50% 0%,rgba(232,255,71,0.07) 0%,transparent 60%),var(--bg);
+  z-index:100;
+  animation:fadeUp .4s ease;
+}
+@keyframes fadeUp{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
+
+.landing-logo{display:flex;flex-direction:column;align-items:center;gap:10px;margin-bottom:32px}
+.landing-icon svg{display:block}
+.landing-name{font-size:36px;font-weight:800;letter-spacing:-1.5px}
+.landing-sub{font-size:12px;color:var(--fg-muted);font-family:var(--mono);letter-spacing:.5px}
+
+.drop-zone{
+  width:min(360px,90vw);
+  border:1.5px dashed var(--border2);
+  border-radius:14px;
+  padding:40px 28px;
+  display:flex;flex-direction:column;align-items:center;gap:12px;
+  background:var(--bg2);
+  transition:.2s ease;
+}
+.drop-zone.over{border-color:var(--accent);background:var(--accent-bg)}
+.drop-icon{color:var(--fg-dim);transition:.2s}
+.drop-zone.over .drop-icon{color:var(--accent)}
+.drop-title{font-size:15px;font-weight:600}
+.drop-or{font-size:12px;color:var(--fg-dim)}
+.drop-formats{font-size:11px;color:var(--fg-dim);font-family:var(--mono);letter-spacing:1px}
+
+.btn-accent{
+  background:var(--accent);color:#0e0e0f;
+  border:none;border-radius:var(--r);
+  padding:11px 28px;
+  font-family:var(--font);font-weight:700;font-size:14px;
+  transition:.15s ease;
+  display:inline-flex;align-items:center;gap:8px;
+}
+.btn-accent:hover{background:#f3ff60;transform:translateY(-1px)}
+.btn-accent:active{transform:none}
+
+/* ════════════════════════════════════
+   EDITOR — full screen layout
+════════════════════════════════════ */
+#editor{
+  position:fixed;inset:0;
+  display:flex;flex-direction:column;
+  background:var(--bg);
+}
+
+/* ── PREVIEW AREA ── */
+#preview-wrap{
+  flex:1;min-height:0;
+  position:relative;
+  display:flex;align-items:center;justify-content:center;
+  background:
+    linear-gradient(var(--border) 1px,transparent 1px),
+    linear-gradient(90deg,var(--border) 1px,transparent 1px);
+  background-size:20px 20px;
+  background-color:var(--bg);
+  overflow:hidden;
+}
+#preview-canvas{
+  max-width:100%;max-height:100%;
+  display:block;
+  image-rendering:pixelated;
+}
+.spinner{
+  position:absolute;inset:0;
+  display:flex;align-items:center;justify-content:center;
+  background:rgba(14,14,15,.65);backdrop-filter:blur(4px);
+}
+.spinner-ring{
+  width:36px;height:36px;
+  border:2px solid var(--border2);
+  border-top-color:var(--accent);
+  border-radius:50%;
+  animation:spin .7s linear infinite;
+}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+/* ── CONTROL ZONE (below preview) ── */
+#control-zone{
+  flex-shrink:0;
+  display:flex;flex-direction:column;
+  background:var(--bg2);
+  border-top:1px solid var(--border);
+}
+
+/* param label row */
+#param-label-row{
+  height:var(--param-label-h);
+  display:flex;align-items:center;justify-content:center;
+  font-size:11px;font-family:var(--mono);color:var(--fg-muted);
+  letter-spacing:.8px;text-transform:uppercase;
+  border-bottom:1px solid var(--border);
+  flex-shrink:0;
+}
+
+/* slider row */
+#slider-row{
+  height:var(--slider-row-h);
+  display:flex;align-items:center;
+  padding:0 16px;gap:10px;
+  border-bottom:1px solid var(--border);
+  flex-shrink:0;
+}
+#slider-row input[type=range]{
+  flex:1;
+  -webkit-appearance:none;appearance:none;
+  height:4px;background:var(--border2);border-radius:2px;outline:none;
+}
+#slider-row input[type=range]::-webkit-slider-thumb{
+  -webkit-appearance:none;
+  width:18px;height:18px;border-radius:50%;
+  background:var(--accent);
+  box-shadow:0 0 0 3px var(--bg2);
+}
+#slider-row input[type=range]::-moz-range-thumb{
+  width:18px;height:18px;border-radius:50%;
+  background:var(--accent);border:3px solid var(--bg2);
+}
+.slider-min,.slider-max{
+  font-size:10px;font-family:var(--mono);color:var(--fg-dim);
+  flex-shrink:0;width:28px;text-align:center;
+}
+.slider-max{text-align:right}
+#slider-val{
+  font-size:13px;font-family:var(--mono);color:var(--accent);
+  width:40px;text-align:right;flex-shrink:0;
+}
+
+/* tool icon row */
+#tool-row{
+  height:var(--tool-row-h);
+  display:flex;align-items:center;
+  padding:0 8px;gap:4px;
+  border-bottom:1px solid var(--border);
+  overflow-x:auto;
+  scrollbar-width:none;
+  flex-shrink:0;
+}
+#tool-row::-webkit-scrollbar{display:none}
+
+.tool-btn{
+  flex-shrink:0;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;
+  min-width:56px;height:40px;padding:0 6px;
+  border-radius:6px;border:1px solid transparent;
+  background:transparent;color:var(--fg-muted);
+  font-size:9px;font-family:var(--mono);
+  transition:.15s ease;
+  white-space:nowrap;
+}
+.tool-btn svg{display:block;flex-shrink:0}
+.tool-btn:hover{color:var(--fg);border-color:var(--border)}
+.tool-btn.active{color:var(--accent);border-color:var(--accent);background:var(--accent-bg)}
+
+/* bottom nav bar */
+#bottom-nav{
+  height:var(--bottom-bar-h);
+  display:flex;align-items:stretch;
+  border-top:1px solid var(--border);
+  flex-shrink:0;
+}
+.nav-btn{
+  flex:1;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;
+  background:transparent;border:none;
+  color:var(--fg-dim);font-size:10px;font-family:var(--mono);
+  border-top:2px solid transparent;
+  transition:.15s ease;
+}
+.nav-btn svg{display:block}
+.nav-btn:hover{color:var(--fg-muted)}
+.nav-btn.active{color:var(--accent);border-top-color:var(--accent)}
+
+/* ════════════════════════════════════
+   DESKTOP (≥768px) — side panel
+════════════════════════════════════ */
+@media(min-width:768px){
+  #editor{flex-direction:row}
+
+  #preview-wrap{flex:1;height:100%}
+
+  #control-zone{
+    width:280px;height:100%;
+    border-top:none;border-left:1px solid var(--border);
+    flex-direction:column;
+    overflow-y:auto;
+  }
+
+  /* desktop header in control zone */
+  #desktop-header{
+    height:52px;
+    display:flex;align-items:center;
+    padding:0 16px;gap:10px;
+    border-bottom:1px solid var(--border);
+    flex-shrink:0;
+  }
+  #desktop-header .d-logo{font-size:16px;font-weight:800;letter-spacing:-.5px;flex:1}
+  #desktop-header button{
+    width:32px;height:32px;
+    display:flex;align-items:center;justify-content:center;
+    background:transparent;border:1px solid var(--border);border-radius:6px;
+    color:var(--fg-muted);transition:.15s;
+  }
+  #desktop-header button:hover{border-color:var(--border2);color:var(--fg)}
+
+  /* on desktop param label, slider, tool row stack vertically full width */
+  #param-label-row{border-top:1px solid var(--border);height:auto;padding:10px 16px 6px;justify-content:flex-start}
+  #slider-row{height:auto;padding:8px 16px;border-bottom:none}
+  #tool-row{height:auto;flex-wrap:wrap;padding:8px;gap:6px;overflow-x:visible;border-bottom:none}
+  .tool-btn{min-width:60px;height:52px;flex-direction:column;gap:4px;font-size:9px}
+
+  /* desktop section labels */
+  .desktop-section{
+    padding:12px 16px 4px;
+    font-size:10px;font-family:var(--mono);color:var(--fg-dim);
+    text-transform:uppercase;letter-spacing:1px;
+    border-top:1px solid var(--border);
+  }
+
+  /* bottom nav on desktop becomes top tabs */
+  #bottom-nav{
+    display:none;
+  }
+
+  /* desktop nav tabs at top of control panel */
+  #desktop-nav{
+    display:flex;border-bottom:1px solid var(--border);flex-shrink:0;
+  }
+  #desktop-nav .dnav-btn{
+    flex:1;padding:8px 4px;
+    background:transparent;border:none;border-bottom:2px solid transparent;
+    color:var(--fg-muted);font-size:11px;font-family:var(--mono);
+    display:flex;align-items:center;justify-content:center;gap:4px;
+    transition:.15s;margin-bottom:-1px;
+  }
+  #desktop-nav .dnav-btn.active{color:var(--accent);border-bottom-color:var(--accent)}
+  #desktop-nav .dnav-btn:hover{color:var(--fg)}
+
+  /* hide mobile-only things */
+  #mobile-header{display:none}
+}
+
+@media(max-width:767px){
+  #desktop-header{display:none}
+  #desktop-nav{display:none}
+  .desktop-section{display:none}
+}
+
+/* ── mobile top bar ── */
+#mobile-header{
+  height:44px;
+  display:flex;align-items:center;justify-content:space-between;
+  padding:0 12px;
+  background:var(--bg2);border-bottom:1px solid var(--border);
+  flex-shrink:0;z-index:10;
+}
+.mh-btn{
+  width:32px;height:32px;
+  display:flex;align-items:center;justify-content:center;
+  background:transparent;border:1px solid var(--border);border-radius:6px;
+  color:var(--fg-muted);transition:.15s;
+}
+.mh-btn:hover{border-color:var(--border2);color:var(--fg)}
+.mh-title{font-size:14px;font-weight:700;letter-spacing:-.3px}
+
+/* ════════════════════════════════════
+   SECTIONS (content panels)
+════════════════════════════════════ */
+.section-panel{display:none;flex-direction:column}
+.section-panel.active{display:flex}
+
+/* edit controls */
+.edit-group{padding:8px 12px;display:flex;flex-direction:column;gap:6px}
+.edit-group-label{font-size:10px;font-family:var(--mono);color:var(--fg-dim);text-transform:uppercase;letter-spacing:1px}
+.edit-row{display:flex;gap:6px;flex-wrap:wrap}
+.edit-btn{
+  flex:1;min-width:60px;
+  padding:8px 6px;border-radius:6px;
+  background:var(--bg3);border:1px solid var(--border);
+  color:var(--fg-muted);font-size:10px;font-family:var(--mono);
+  display:flex;flex-direction:column;align-items:center;gap:4px;
+  transition:.15s;
+}
+.edit-btn:hover{border-color:var(--border2);color:var(--fg)}
+.edit-btn svg{display:block}
+
+/* tone sliders (edit panel) */
+.tone-sliders{padding:4px 12px 10px;display:flex;flex-direction:column;gap:8px}
+.tone-row{display:grid;grid-template-columns:80px 1fr 36px;align-items:center;gap:8px}
+.tone-row label{font-size:11px;color:var(--fg-muted)}
+.tone-row .t-val{font-size:11px;font-family:var(--mono);color:var(--accent);text-align:right}
+.tone-row input[type=range]{
+  -webkit-appearance:none;appearance:none;
+  height:3px;background:var(--border2);border-radius:2px;outline:none;
+}
+.tone-row input[type=range]::-webkit-slider-thumb{
+  -webkit-appearance:none;
+  width:14px;height:14px;border-radius:50%;
+  background:var(--accent);box-shadow:0 0 0 2px var(--bg2);
+}
+.tone-row input[type=range]::-moz-range-thumb{
+  width:14px;height:14px;border-radius:50%;
+  background:var(--accent);border:2px solid var(--bg2);
+}
+.btn-ghost-sm{
+  background:transparent;border:1px solid var(--border);border-radius:6px;
+  padding:5px 12px;color:var(--fg-muted);font-size:11px;font-family:var(--mono);
+  transition:.15s;align-self:flex-start;margin:0 12px;
+}
+.btn-ghost-sm:hover{border-color:var(--border2);color:var(--fg)}
+
+/* algo cards */
+.algo-cards{
+  display:grid;grid-template-columns:repeat(4,1fr);
+  gap:6px;padding:8px 12px;
+}
+.algo-card{
+  display:flex;flex-direction:column;align-items:center;gap:4px;
+  padding:8px 4px;border-radius:6px;
+  border:1px solid var(--border);background:var(--bg3);
+  color:var(--fg-muted);font-size:9px;font-family:var(--mono);
+  transition:.15s;text-align:center;
+}
+.algo-card:hover{border-color:var(--border2);color:var(--fg)}
+.algo-card.active{border-color:var(--accent);background:var(--accent-bg);color:var(--accent)}
+.algo-icon{height:32px;display:flex;align-items:center;justify-content:center}
+
+/* algo params in control zone */
+.algo-params{display:flex;flex-direction:column;gap:0}
+.aparam-group{
+  padding:6px 12px;
+  display:flex;flex-direction:column;gap:6px;
+}
+.aparam-row{display:grid;grid-template-columns:80px 1fr 38px;align-items:center;gap:8px}
+.aparam-row label{font-size:11px;color:var(--fg-muted)}
+.aparam-row .ap-val{font-size:11px;font-family:var(--mono);color:var(--accent);text-align:right}
+.aparam-row input[type=range]{
+  -webkit-appearance:none;appearance:none;
+  height:3px;background:var(--border2);border-radius:2px;outline:none;
+}
+.aparam-row input[type=range]::-webkit-slider-thumb{
+  -webkit-appearance:none;
+  width:14px;height:14px;border-radius:50%;
+  background:var(--accent);box-shadow:0 0 0 2px var(--bg2);
+}
+.aparam-row input[type=range]::-moz-range-thumb{
+  width:14px;height:14px;border-radius:50%;
+  background:var(--accent);border:2px solid var(--bg2);
+}
+
+/* export section */
+.export-section{padding:10px 12px;display:flex;flex-direction:column;gap:10px}
+.format-row{display:grid;grid-template-columns:repeat(3,1fr);gap:6px}
+.fmt-card{cursor:pointer}
+.fmt-card input{display:none}
+.fmt-inner{
+  display:flex;flex-direction:column;align-items:center;gap:2px;
+  padding:10px 4px;border-radius:6px;
+  border:1px solid var(--border);background:var(--bg3);transition:.15s;
+}
+.fmt-card:hover .fmt-inner{border-color:var(--border2)}
+.fmt-card input:checked~.fmt-inner{border-color:var(--accent);background:var(--accent-bg)}
+.fmt-name{font-size:14px;font-weight:700;font-family:var(--mono)}
+.fmt-desc{font-size:9px;color:var(--fg-muted)}
+.paper-row{display:flex;gap:5px;flex-wrap:wrap}
+.paper-btn{
+  padding:5px 11px;border-radius:5px;
+  background:var(--bg3);border:1px solid var(--border);
+  color:var(--fg-muted);font-family:var(--mono);font-size:11px;
+  transition:.15s;
+}
+.paper-btn:hover{border-color:var(--border2);color:var(--fg)}
+.paper-btn.active{border-color:var(--accent);color:var(--accent);background:var(--accent-bg)}
+.export-label{font-size:10px;font-family:var(--mono);color:var(--fg-dim);text-transform:uppercase;letter-spacing:.8px}
+.margin-row{display:grid;grid-template-columns:70px 1fr 30px;align-items:center;gap:8px}
+.margin-row label{font-size:11px;color:var(--fg-muted)}
+.margin-row .m-val{font-size:11px;font-family:var(--mono);color:var(--accent);text-align:right}
+.margin-row input[type=range]{
+  -webkit-appearance:none;appearance:none;
+  height:3px;background:var(--border2);border-radius:2px;outline:none;
+}
+.margin-row input[type=range]::-webkit-slider-thumb{
+  -webkit-appearance:none;
+  width:14px;height:14px;border-radius:50%;
+  background:var(--accent);box-shadow:0 0 0 2px var(--bg2);
+}
+.margin-row input[type=range]::-moz-range-thumb{
+  width:14px;height:14px;border-radius:50%;
+  background:var(--accent);border:2px solid var(--bg2);
+}
+
+.btn-export-big{
+  width:100%;padding:13px;
+  background:var(--accent);color:#0e0e0f;
+  border:none;border-radius:var(--r);
+  font-family:var(--font);font-weight:700;font-size:14px;
+  display:flex;align-items:center;justify-content:center;gap:8px;
+  transition:.15s;
+}
+.btn-export-big:hover{background:#f3ff60;transform:translateY(-1px)}
+
+/* ── TOAST ── */
+#toast{
+  position:fixed;bottom:calc(var(--bottom-bar-h) + 12px);left:50%;
+  transform:translateX(-50%) translateY(6px);
+  background:var(--bg3);border:1px solid var(--border2);border-radius:6px;
+  padding:7px 16px;font-size:12px;font-family:var(--mono);
+  z-index:999;opacity:0;transition:.2s ease;pointer-events:none;white-space:nowrap;
+}
+#toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+@media(min-width:768px){#toast{bottom:24px}}
+
+/* ── CROP MODAL ── */
+#crop-modal{
+  position:fixed;inset:0;z-index:200;
+  display:flex;flex-direction:column;
+  background:rgba(0,0,0,.9);
+}
+#crop-canvas-bg{position:absolute;inset:0}
+#crop-region{flex:1;position:relative}
+#crop-box{
+  position:absolute;
+  border:1.5px solid rgba(232,255,71,.85);
+  cursor:move;
+  box-shadow:0 0 0 9999px rgba(0,0,0,.5);
+}
+.crop-corner{position:absolute;width:14px;height:14px;border-color:var(--accent);border-style:solid}
+.crop-corner.tl{top:-2px;left:-2px;border-width:2px 0 0 2px;cursor:nw-resize}
+.crop-corner.tr{top:-2px;right:-2px;border-width:2px 2px 0 0;cursor:ne-resize}
+.crop-corner.bl{bottom:-2px;left:-2px;border-width:0 0 2px 2px;cursor:sw-resize}
+.crop-corner.br{bottom:-2px;right:-2px;border-width:0 2px 2px 0;cursor:se-resize}
+.crop-grid{
+  position:absolute;inset:0;
+  background-image:linear-gradient(rgba(232,255,71,.15) 1px,transparent 1px),linear-gradient(90deg,rgba(232,255,71,.15) 1px,transparent 1px);
+  background-size:33.33% 33.33%;
+  pointer-events:none;
+}
+#crop-bar{
+  padding:10px 12px;
+  background:var(--bg2);border-top:1px solid var(--border);
+  display:flex;align-items:center;gap:8px;flex-shrink:0;
+}
+.crop-ratios{display:flex;gap:4px;flex:1;justify-content:center}
+.ratio-btn{
+  padding:5px 10px;border-radius:4px;
+  border:1px solid var(--border);background:transparent;
+  color:var(--fg-muted);font-family:var(--mono);font-size:11px;
+  transition:.15s;
+}
+.ratio-btn.active,.ratio-btn:hover{border-color:var(--accent);color:var(--accent)}
+.crop-action{
+  padding:7px 16px;border-radius:6px;border:none;
+  font-family:var(--font);font-size:12px;font-weight:600;
+  transition:.15s;
+}
+.crop-cancel{background:transparent;border:1px solid var(--border2);color:var(--fg-muted)}
+.crop-cancel:hover{color:var(--fg)}
+.crop-apply{background:var(--accent);color:#0e0e0f}
+.crop-apply:hover{background:#f3ff60}
+</style>
 </head>
 <body>
 
-<!-- ═══════════════════════════════════════════
-     LANDING / DROP ZONE (no image loaded)
-════════════════════════════════════════════ -->
-<div id="landing" class="landing">
-  <div class="landing-inner">
-    <div class="logo-mark">
-      <svg width="48" height="48" viewBox="0 0 48 48" fill="none">
-        <path d="M4 12 Q12 8 20 12 Q28 16 36 12 Q44 8 44 12" stroke="var(--accent)" stroke-width="2" fill="none"/>
-        <path d="M4 20 Q12 14 20 20 Q28 26 36 20 Q44 14 44 20" stroke="var(--accent)" stroke-width="2" fill="none"/>
-        <path d="M4 28 Q12 20 20 28 Q28 36 36 28 Q44 20 44 28" stroke="var(--fg)" stroke-width="2" fill="none"/>
-        <path d="M4 36 Q12 26 20 36 Q28 46 36 36 Q44 26 44 36" stroke="var(--fg)" stroke-width="1.5" fill="none" opacity="0.5"/>
+<!-- ═══════════════ LANDING ═══════════════ -->
+<div id="landing">
+  <div class="landing-logo">
+    <!-- Leonardo vitruvian-inspired line icon -->
+    <div class="landing-icon">
+      <svg width="64" height="64" viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <!-- outer circle -->
+        <circle cx="32" cy="32" r="28" stroke="#e8ff47" stroke-width="1.5" fill="none"/>
+        <!-- square inscribed -->
+        <rect x="12" y="12" width="40" height="40" stroke="#e8ff47" stroke-width="1" fill="none" opacity=".4"/>
+        <!-- figure: head -->
+        <circle cx="32" cy="18" r="4" stroke="#e8ff47" stroke-width="1.5" fill="none"/>
+        <!-- body -->
+        <line x1="32" y1="22" x2="32" y2="44" stroke="#e8ff47" stroke-width="1.5" stroke-linecap="round"/>
+        <!-- arms spread (vitruvian) -->
+        <line x1="12" y1="30" x2="52" y2="30" stroke="#e8ff47" stroke-width="1.2" stroke-linecap="round"/>
+        <!-- inner arms -->
+        <line x1="20" y1="34" x2="44" y2="34" stroke="#e8ff47" stroke-width="1" stroke-linecap="round" opacity=".5"/>
+        <!-- legs spread -->
+        <line x1="32" y1="44" x2="18" y2="58" stroke="#e8ff47" stroke-width="1.5" stroke-linecap="round"/>
+        <line x1="32" y1="44" x2="46" y2="58" stroke="#e8ff47" stroke-width="1.5" stroke-linecap="round"/>
+        <!-- legs closed -->
+        <line x1="32" y1="44" x2="24" y2="58" stroke="#e8ff47" stroke-width="1" stroke-linecap="round" opacity=".4"/>
+        <line x1="32" y1="44" x2="40" y2="58" stroke="#e8ff47" stroke-width="1" stroke-linecap="round" opacity=".4"/>
+        <!-- squiggle overlay on body – plotter feel -->
+        <path d="M28 26 Q30 24 32 26 Q34 28 36 26" stroke="#e8ff47" stroke-width="1" fill="none" opacity=".6"/>
+        <path d="M28 30 Q30 28 32 30 Q34 32 36 30" stroke="#e8ff47" stroke-width="1" fill="none" opacity=".4"/>
       </svg>
     </div>
-    <h1 class="logo-text">PlotterCam</h1>
-    <p class="logo-sub">Képből plotter-kész vektorgrafika</p>
-
-    <div class="drop-zone" id="dropZone">
-      <input type="file" id="fileInput" accept="image/*" hidden>
-      <div class="drop-icon">
-        <svg width="40" height="40" viewBox="0 0 40 40" fill="none">
-          <rect x="4" y="4" width="32" height="32" rx="4" stroke="currentColor" stroke-width="1.5" stroke-dasharray="4 3"/>
-          <path d="M20 14v12M14 20l6-6 6 6" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
-        </svg>
-      </div>
-      <p class="drop-text">Húzd ide a képet</p>
-      <p class="drop-sub">vagy</p>
-      <button class="btn-primary" onclick="document.getElementById('fileInput').click()">
-        Fájl kiválasztása
-      </button>
-      <p class="drop-formats">JPG · PNG · WEBP · GIF</p>
-    </div>
+    <div class="landing-name">LeonarDraw</div>
+    <div class="landing-sub">Képből plotter-kész vektorgrafika</div>
   </div>
+
+  <div class="drop-zone" id="drop-zone">
+    <div class="drop-icon">
+      <svg width="40" height="40" viewBox="0 0 40 40" fill="none">
+        <rect x="4" y="4" width="32" height="32" rx="5" stroke="currentColor" stroke-width="1.5" stroke-dasharray="4 3"/>
+        <path d="M20 14v12M14 20l6-6 6 6" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+    </div>
+    <div class="drop-title">Húzd ide a képet</div>
+    <div class="drop-or">vagy</div>
+    <button class="btn-accent" id="btn-choose">
+      <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M2 10v2a1 1 0 001 1h10a1 1 0 001-1v-2M8 3v8M5 6l3-3 3 3" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      Fájl kiválasztása
+    </button>
+    <div class="drop-formats">JPG · PNG · WEBP · GIF</div>
+  </div>
+  <input type="file" id="file-input" accept="image/*" style="display:none">
 </div>
 
-<!-- ═══════════════════════════════════════════
-     MAIN EDITOR
-════════════════════════════════════════════ -->
-<div id="editor" class="editor hidden">
+<!-- ═══════════════ EDITOR ═══════════════ -->
+<div id="editor" class="hidden">
 
-  <!-- TOP BAR -->
-  <header class="topbar">
-    <button class="topbar-btn" id="btnBack" title="Új kép">
-      <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
-        <path d="M11 4L6 9l5 5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
-      </svg>
+  <!-- mobile top bar -->
+  <div id="mobile-header">
+    <button class="mh-btn" id="btn-back">
+      <svg width="18" height="18" viewBox="0 0 18 18" fill="none"><path d="M11 4L6 9l5 5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
     </button>
-    <span class="topbar-title">PlotterCam</span>
-    <button class="topbar-btn" id="btnLoadNew" title="Kép betöltése">
-      <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
-        <path d="M3 12v2a1 1 0 001 1h10a1 1 0 001-1v-2M9 3v9M6 6l3-3 3 3" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
-      </svg>
+    <span class="mh-title">LeonarDraw</span>
+    <button class="mh-btn" id="btn-load-new">
+      <svg width="18" height="18" viewBox="0 0 18 18" fill="none"><path d="M3 12v2a1 1 0 001 1h10a1 1 0 001-1v-2M9 3v9M6 6l3-3 3 3" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
     </button>
-  </header>
+  </div>
+  <input type="file" id="file-input-2" accept="image/*" style="display:none">
 
-  <!-- PREVIEW AREA -->
-  <div class="preview-wrap" id="previewWrap">
-    <canvas id="previewCanvas"></canvas>
-    <div class="preview-spinner hidden" id="previewSpinner">
-      <div class="spinner-ring"></div>
-    </div>
-    <!-- Crop overlay -->
-    <div class="crop-overlay hidden" id="cropOverlay">
-      <canvas id="cropCanvas"></canvas>
-      <div class="crop-handles" id="cropHandles">
-        <div class="crop-box" id="cropBox">
-          <div class="crop-corner tl"></div>
-          <div class="crop-corner tr"></div>
-          <div class="crop-corner bl"></div>
-          <div class="crop-corner br"></div>
-          <div class="crop-grid"></div>
-        </div>
-      </div>
-      <div class="crop-toolbar">
-        <button class="crop-btn" id="cropReset">Visszaállít</button>
-        <div class="crop-ratios">
-          <button class="ratio-btn active" data-ratio="free">Szabad</button>
-          <button class="ratio-btn" data-ratio="1">1:1</button>
-          <button class="ratio-btn" data-ratio="1.333">4:3</button>
-          <button class="ratio-btn" data-ratio="1.414">A4</button>
-        </div>
-        <button class="crop-btn crop-btn-apply" id="cropApply">Alkalmaz</button>
-      </div>
-    </div>
+  <!-- preview -->
+  <div id="preview-wrap">
+    <canvas id="preview-canvas"></canvas>
+    <div class="spinner hidden" id="spinner"><div class="spinner-ring"></div></div>
   </div>
 
-  <!-- ═══ PANEL (bottom sheet on mobile, right panel on desktop) ═══ -->
-  <div class="panel" id="panel">
-    <div class="panel-drag-handle" id="panelDragHandle">
-      <div class="drag-bar"></div>
+  <!-- CONTROL ZONE -->
+  <div id="control-zone">
+
+    <!-- Desktop header -->
+    <div id="desktop-header">
+      <div class="d-logo">LeonarDraw</div>
+      <button id="btn-back-d" title="Új kép">
+        <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M10 4L5 8l5 4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </button>
+      <button id="btn-load-d" title="Kép betöltése">
+        <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M3 10v2a1 1 0 001 1h8a1 1 0 001-1v-2M8 3v7M5 6l3-3 3 3" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </button>
     </div>
 
-    <!-- TAB BAR -->
-    <div class="tab-bar">
-      <button class="tab active" data-tab="edit">
-        <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-          <path d="M2 11.5V14h2.5l7-7-2.5-2.5-7 7zM13.5 4a.7.7 0 000-1L12 1.5a.7.7 0 00-1 0L9.5 3 12 5.5l1.5-1.5z" fill="currentColor"/>
-        </svg>
+    <!-- Desktop nav tabs -->
+    <div id="desktop-nav">
+      <button class="dnav-btn active" data-sec="edit">
+        <svg width="13" height="13" viewBox="0 0 16 16" fill="none"><path d="M2 11.5V14h2.5l7-7-2.5-2.5-7 7zM13.5 4a.7.7 0 000-1L12 1.5a.7.7 0 00-1 0L9.5 3 12 5.5l1.5-1.5z" fill="currentColor"/></svg>
         Szerkesztés
       </button>
-      <button class="tab" data-tab="algo">
-        <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-          <path d="M1 5 Q4 2 7 5 Q10 8 13 5 Q15 3 15 5" stroke="currentColor" stroke-width="1.5" fill="none" stroke-linecap="round"/>
-          <path d="M1 9 Q4 5 7 9 Q10 13 13 9 Q15 7 15 9" stroke="currentColor" stroke-width="1.5" fill="none" stroke-linecap="round"/>
-        </svg>
+      <button class="dnav-btn" data-sec="algo">
+        <svg width="13" height="13" viewBox="0 0 16 16" fill="none"><path d="M1 6 Q4 2 7 6 Q10 10 13 6" stroke="currentColor" stroke-width="1.5" fill="none" stroke-linecap="round"/><path d="M1 10 Q4 6 7 10 Q10 14 13 10" stroke="currentColor" stroke-width="1.5" fill="none" stroke-linecap="round"/></svg>
         Algoritmus
       </button>
-      <button class="tab" data-tab="export">
-        <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-          <path d="M3 10v2a1 1 0 001 1h8a1 1 0 001-1v-2M8 3v7M5 6l3-3 3 3" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
-        </svg>
+      <button class="dnav-btn" data-sec="export">
+        <svg width="13" height="13" viewBox="0 0 16 16" fill="none"><path d="M3 10v2a1 1 0 001 1h8a1 1 0 001-1v-2M8 3v7M5 6l3-3 3 3" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
         Export
       </button>
     </div>
 
-    <!-- ── TAB: SZERKESZTÉS ── -->
-    <div class="tab-content active" id="tab-edit">
-      <div class="section">
-        <div class="section-label">Vágás &amp; Forgatás</div>
-        <div class="tool-row">
-          <button class="tool-btn" id="btnCrop">
-            <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
-              <path d="M4 1v12a1 1 0 001 1h12M1 4h12a1 1 0 011 1v12" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
-            </svg>
+    <!-- ── SECTION: SZERKESZTÉS ── -->
+    <div class="section-panel active" id="sec-edit">
+      <div class="edit-group">
+        <div class="edit-group-label">Vágás &amp; Forgatás</div>
+        <div class="edit-row">
+          <button class="edit-btn" id="btn-crop">
+            <svg width="18" height="18" viewBox="0 0 18 18" fill="none"><path d="M4 1v12a1 1 0 001 1h12M1 4h12a1 1 0 011 1v12" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
             Vágás
           </button>
-          <button class="tool-btn" id="btnRotateCCW">
-            <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
-              <path d="M3 9a6 6 0 106-6H7M7 1L4 4l3 3" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
-            </svg>
+          <button class="edit-btn" id="btn-rot-ccw">
+            <svg width="18" height="18" viewBox="0 0 18 18" fill="none"><path d="M3 9a6 6 0 106-6H7M7 1L4 4l3 3" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
             −90°
           </button>
-          <button class="tool-btn" id="btnRotateCW">
-            <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
-              <path d="M15 9a6 6 0 11-6-6h2M11 1l3 3-3 3" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
-            </svg>
+          <button class="edit-btn" id="btn-rot-cw">
+            <svg width="18" height="18" viewBox="0 0 18 18" fill="none"><path d="M15 9a6 6 0 11-6-6h2M11 1l3 3-3 3" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
             +90°
           </button>
-          <button class="tool-btn" id="btnFlipH">
-            <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
-              <path d="M9 2v14M3 5l-2 4 2 4M15 5l2 4-2 4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
-            </svg>
+          <button class="edit-btn" id="btn-flip">
+            <svg width="18" height="18" viewBox="0 0 18 18" fill="none"><path d="M9 2v14M3 5l-2 4 2 4M15 5l2 4-2 4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
             Tükrözés
           </button>
         </div>
       </div>
+      <div class="tone-sliders">
+        <div style="font-size:10px;font-family:var(--mono);color:var(--fg-dim);text-transform:uppercase;letter-spacing:1px;margin-bottom:2px">Tónuskorrekció</div>
+        <div class="tone-row"><label>Fényerő</label><input type="range" id="sl-bright" min="-100" max="100" value="0"><span class="t-val" id="v-bright">0</span></div>
+        <div class="tone-row"><label>Kontraszt</label><input type="range" id="sl-contrast" min="-100" max="100" value="0"><span class="t-val" id="v-contrast">0</span></div>
+        <div class="tone-row"><label>Fekete pont</label><input type="range" id="sl-black" min="0" max="128" value="0"><span class="t-val" id="v-black">0</span></div>
+        <div class="tone-row"><label>Fehér pont</label><input type="range" id="sl-white" min="128" max="255" value="255"><span class="t-val" id="v-white">255</span></div>
+        <div class="tone-row"><label>Gamma</label><input type="range" id="sl-gamma" min="50" max="200" value="100"><span class="t-val" id="v-gamma">1.0</span></div>
+      </div>
+      <button class="btn-ghost-sm" id="btn-reset-tone">Visszaállítás</button>
+    </div>
 
-      <div class="section">
-        <div class="section-label">Tónuskorrekció</div>
-        <div class="sliders">
-          <div class="slider-row">
-            <label>Fényerő</label>
-            <input type="range" id="slBrightness" min="-100" max="100" value="0" class="slider">
-            <span class="slider-val" id="valBrightness">0</span>
-          </div>
-          <div class="slider-row">
-            <label>Kontraszt</label>
-            <input type="range" id="slContrast" min="-100" max="100" value="0" class="slider">
-            <span class="slider-val" id="valContrast">0</span>
-          </div>
-          <div class="slider-row">
-            <label>Fekete pont</label>
-            <input type="range" id="slBlackPoint" min="0" max="128" value="0" class="slider">
-            <span class="slider-val" id="valBlackPoint">0</span>
-          </div>
-          <div class="slider-row">
-            <label>Fehér pont</label>
-            <input type="range" id="slWhitePoint" min="128" max="255" value="255" class="slider">
-            <span class="slider-val" id="valWhitePoint">255</span>
-          </div>
-          <div class="slider-row">
-            <label>Gamma</label>
-            <input type="range" id="slGamma" min="50" max="200" value="100" class="slider">
-            <span class="slider-val" id="valGamma">1.0</span>
-          </div>
-        </div>
-        <button class="btn-ghost btn-sm" id="btnResetTone">Visszaállítás</button>
+    <!-- ── SECTION: ALGORITMUS (mobile: tool-row + param area) ── -->
+    <div class="section-panel" id="sec-algo">
+      <!-- desktop shows algo cards here too -->
+      <div class="desktop-section">Mód</div>
+      <div class="algo-cards" id="algo-cards">
+        <button class="algo-card active" data-algo="squiggle-h">
+          <div class="algo-icon"><svg width="44" height="28" viewBox="0 0 44 28" fill="none"><path d="M2 8 Q6 2 11 8 Q16 14 22 8 Q28 2 33 8 Q38 14 42 8" stroke="var(--accent)" stroke-width="1.5" fill="none"/><path d="M2 20 Q6 16 11 20 Q16 24 22 20 Q28 16 33 20 Q38 24 42 20" stroke="currentColor" stroke-width="1" fill="none" opacity=".4"/></svg></div>
+          <span>Vízszintes</span>
+        </button>
+        <button class="algo-card" data-algo="squiggle-v">
+          <div class="algo-icon"><svg width="28" height="44" viewBox="0 0 28 44" fill="none"><path d="M8 2 Q2 8 8 14 Q14 20 8 26 Q2 32 8 38 Q14 44 8 42" stroke="var(--accent)" stroke-width="1.5" fill="none"/><path d="M20 2 Q16 8 20 14 Q24 20 20 26 Q16 32 20 38 Q24 44 20 42" stroke="currentColor" stroke-width="1" fill="none" opacity=".4"/></svg></div>
+          <span>Függőleges</span>
+        </button>
+        <button class="algo-card" data-algo="squiggle-both">
+          <div class="algo-icon"><svg width="36" height="36" viewBox="0 0 36 36" fill="none"><path d="M2 10 Q6 4 11 10 Q16 16 21 10 Q26 4 34 10" stroke="var(--accent)" stroke-width="1.2" fill="none"/><path d="M2 22 Q6 16 11 22 Q16 28 21 22 Q26 16 34 22" stroke="var(--accent)" stroke-width="1" fill="none" opacity=".5"/><path d="M10 2 Q4 6 10 11 Q16 16 10 21 Q4 26 10 34" stroke="currentColor" stroke-width="1" fill="none" opacity=".35"/></svg></div>
+          <span>Rács</span>
+        </button>
+        <button class="algo-card" data-algo="spiral">
+          <div class="algo-icon"><svg width="40" height="40" viewBox="0 0 40 40" fill="none"><path d="M20 20 m0,-16 a16,16 0 1,1 -.1,0 m0,4 a12,12 0 1,0 .1,0 m0,4 a8,8 0 1,1 -.1,0 m0,4 a4,4 0 1,0 .1,0" stroke="var(--accent)" stroke-width="1.3" fill="none"/></svg></div>
+          <span>Spirál</span>
+        </button>
+      </div>
+
+      <div class="desktop-section">Paraméterek</div>
+      <div class="algo-params" id="algo-params">
+        <!-- filled by JS -->
       </div>
     </div>
 
-    <!-- ── TAB: ALGORITMUS ── -->
-    <div class="tab-content" id="tab-algo">
-      <div class="section">
-        <div class="section-label">Mód kiválasztása</div>
-        <div class="algo-grid" id="algoGrid">
-          <button class="algo-card active" data-algo="squiggle-h">
-            <div class="algo-icon">
-              <svg width="48" height="32" viewBox="0 0 48 32" fill="none">
-                <path d="M2 8 Q8 2 14 8 Q20 14 26 8 Q32 2 38 8 Q44 14 46 8" stroke="var(--accent)" stroke-width="1.5" fill="none"/>
-                <path d="M2 16 Q8 10 14 16 Q20 22 26 16 Q32 10 38 16 Q44 22 46 16" stroke="var(--accent)" stroke-width="1.5" fill="none"/>
-                <path d="M2 24 Q8 22 14 24 Q20 26 26 24 Q32 22 38 24 Q44 26 46 24" stroke="var(--fg-muted)" stroke-width="1" fill="none"/>
-              </svg>
-            </div>
-            <span>Squiggle</span>
-          </button>
-          <button class="algo-card" data-algo="squiggle-v">
-            <div class="algo-icon">
-              <svg width="32" height="48" viewBox="0 0 32 48" fill="none">
-                <path d="M8 2 Q2 8 8 14 Q14 20 8 26 Q2 32 8 38 Q14 44 8 46" stroke="var(--accent)" stroke-width="1.5" fill="none"/>
-                <path d="M16 2 Q10 8 16 14 Q22 20 16 26 Q10 32 16 38 Q22 44 16 46" stroke="var(--accent)" stroke-width="1.5" fill="none"/>
-                <path d="M24 2 Q22 8 24 14 Q26 20 24 26 Q22 32 24 38 Q26 44 24 46" stroke="var(--fg-muted)" stroke-width="1" fill="none"/>
-              </svg>
-            </div>
-            <span>Vertical</span>
-          </button>
-          <button class="algo-card" data-algo="spiral">
-            <div class="algo-icon">
-              <svg width="48" height="48" viewBox="0 0 48 48" fill="none">
-                <path d="M24 24 m0-18 a18 18 0 1 1 -0.1 0 m0 4 a14 14 0 1 0 0.1 0 m0 4 a10 10 0 1 1 -0.1 0 m0 4 a6 6 0 1 0 0.1 0" stroke="var(--accent)" stroke-width="1.2" fill="none"/>
-              </svg>
-            </div>
-            <span>Spirál</span>
-          </button>
-          <button class="algo-card" data-algo="hatch">
-            <div class="algo-icon">
-              <svg width="48" height="48" viewBox="0 0 48 48" fill="none">
-                <line x1="4" y1="4" x2="44" y2="44" stroke="var(--accent)" stroke-width="1.2"/>
-                <line x1="12" y1="4" x2="44" y2="36" stroke="var(--accent)" stroke-width="1.2"/>
-                <line x1="20" y1="4" x2="44" y2="28" stroke="var(--accent)" stroke-width="1.5"/>
-                <line x1="28" y1="4" x2="44" y2="20" stroke="var(--accent)" stroke-width="2"/>
-                <line x1="36" y1="4" x2="44" y2="12" stroke="var(--accent)" stroke-width="2"/>
-                <line x1="4" y1="12" x2="36" y2="44" stroke="var(--fg-muted)" stroke-width="1"/>
-                <line x1="4" y1="20" x2="28" y2="44" stroke="var(--fg-muted)" stroke-width="1"/>
-              </svg>
-            </div>
-            <span>Hatch</span>
-          </button>
-          <button class="algo-card" data-algo="crosshatch">
-            <div class="algo-icon">
-              <svg width="48" height="48" viewBox="0 0 48 48" fill="none">
-                <line x1="4" y1="8" x2="44" y2="8" stroke="var(--accent)" stroke-width="1"/>
-                <line x1="4" y1="16" x2="44" y2="16" stroke="var(--accent)" stroke-width="1.5"/>
-                <line x1="4" y1="24" x2="44" y2="24" stroke="var(--accent)" stroke-width="2"/>
-                <line x1="4" y1="32" x2="44" y2="32" stroke="var(--accent)" stroke-width="1.5"/>
-                <line x1="4" y1="40" x2="44" y2="40" stroke="var(--accent)" stroke-width="1"/>
-                <line x1="8" y1="4" x2="8" y2="44" stroke="var(--fg-muted)" stroke-width="1"/>
-                <line x1="16" y1="4" x2="16" y2="44" stroke="var(--fg-muted)" stroke-width="1.5"/>
-                <line x1="24" y1="4" x2="24" y2="44" stroke="var(--fg-muted)" stroke-width="2"/>
-                <line x1="32" y1="4" x2="32" y2="44" stroke="var(--fg-muted)" stroke-width="1.5"/>
-                <line x1="40" y1="4" x2="40" y2="44" stroke="var(--fg-muted)" stroke-width="1"/>
-              </svg>
-            </div>
-            <span>Cross-hatch</span>
-          </button>
-          <button class="algo-card" data-algo="concentric">
-            <div class="algo-icon">
-              <svg width="48" height="48" viewBox="0 0 48 48" fill="none">
-                <circle cx="24" cy="24" r="4" stroke="var(--accent)" stroke-width="2"/>
-                <circle cx="24" cy="24" r="9" stroke="var(--accent)" stroke-width="1.8"/>
-                <circle cx="24" cy="24" r="14" stroke="var(--accent)" stroke-width="1.4"/>
-                <circle cx="24" cy="24" r="19" stroke="var(--fg-muted)" stroke-width="1"/>
-              </svg>
-            </div>
-            <span>Koncentrikus</span>
-          </button>
-          <button class="algo-card" data-algo="flow">
-            <div class="algo-icon">
-              <svg width="48" height="48" viewBox="0 0 48 48" fill="none">
-                <path d="M4 24 C8 16 16 10 24 14 C32 18 36 28 44 24" stroke="var(--accent)" stroke-width="1.5" fill="none"/>
-                <path d="M4 30 C10 20 18 16 26 20 C34 24 38 34 44 30" stroke="var(--accent)" stroke-width="1.5" fill="none"/>
-                <path d="M4 18 C8 12 14 8 22 12 C30 16 34 22 44 18" stroke="var(--fg-muted)" stroke-width="1" fill="none"/>
-              </svg>
-            </div>
-            <span>Flow Field</span>
-          </button>
-          <button class="algo-card" data-algo="stipple">
-            <div class="algo-icon">
-              <svg width="48" height="48" viewBox="0 0 48 48" fill="none">
-                <circle cx="12" cy="12" r="2.5" fill="var(--accent)"/>
-                <circle cx="24" cy="10" r="3" fill="var(--accent)"/>
-                <circle cx="36" cy="14" r="2" fill="var(--accent)"/>
-                <circle cx="8" cy="24" r="2" fill="var(--accent)"/>
-                <circle cx="20" cy="22" r="3.5" fill="var(--accent)"/>
-                <circle cx="32" cy="24" r="3" fill="var(--accent)"/>
-                <circle cx="42" cy="20" r="2" fill="var(--accent)"/>
-                <circle cx="14" cy="36" r="1.5" fill="var(--fg-muted)"/>
-                <circle cx="26" cy="38" r="2" fill="var(--fg-muted)"/>
-                <circle cx="38" cy="34" r="1.5" fill="var(--fg-muted)"/>
-              </svg>
-            </div>
-            <span>Stipple</span>
-          </button>
+    <!-- ── SECTION: EXPORT ── -->
+    <div class="section-panel" id="sec-export">
+      <div class="export-section">
+        <div class="export-label">Formátum</div>
+        <div class="format-row">
+          <label class="fmt-card"><input type="radio" name="fmt" value="svg" checked><div class="fmt-inner"><span class="fmt-name">SVG</span><span class="fmt-desc">Plotter, lézer</span></div></label>
+          <label class="fmt-card"><input type="radio" name="fmt" value="png"><div class="fmt-inner"><span class="fmt-name">PNG</span><span class="fmt-desc">Átlátszóság</span></div></label>
+          <label class="fmt-card"><input type="radio" name="fmt" value="jpg"><div class="fmt-inner"><span class="fmt-name">JPG</span><span class="fmt-desc">Kis méret</span></div></label>
         </div>
+        <div class="export-label">Papírméret</div>
+        <div class="paper-row">
+          <button class="paper-btn active" data-pw="210" data-ph="297">A4</button>
+          <button class="paper-btn" data-pw="297" data-ph="420">A3</button>
+          <button class="paper-btn" data-pw="148" data-ph="210">A5</button>
+          <button class="paper-btn" data-pw="100" data-ph="148">A6</button>
+        </div>
+        <div class="margin-row">
+          <label>Margó (mm)</label>
+          <input type="range" id="sl-margin" min="0" max="30" value="10">
+          <span class="m-val" id="v-margin">10</span>
+        </div>
+        <button class="btn-export-big" id="btn-export">
+          <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M3 10v2a1 1 0 001 1h8a1 1 0 001-1v-2M8 3v7M5 6l3-3 3 3" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          Letöltés
+        </button>
       </div>
+    </div>
 
-      <!-- Dynamic params -->
-      <div class="section" id="algoParams">
-        <div class="section-label">Paraméterek</div>
-        <div class="sliders" id="paramSliders">
-          <!-- filled by JS -->
-        </div>
+    <!-- Mobile: algo mode icons in tool-row + param slider above nav -->
+    <!-- these are only shown on mobile inside control-zone when algo tab active -->
+    <div id="mobile-algo-strip" class="hidden">
+      <!-- param label -->
+      <div id="param-label-row"><span id="active-param-name">—</span></div>
+      <!-- param slider -->
+      <div id="slider-row">
+        <span class="slider-min" id="sl-min">0</span>
+        <input type="range" id="main-slider" min="0" max="100" value="50">
+        <span class="slider-max" id="sl-max">100</span>
+        <span id="slider-val">50</span>
       </div>
-
-      <div class="section">
-        <div class="section-label">Megjelenés</div>
-        <div class="slider-row">
-          <label>Vonalszín</label>
-          <input type="color" id="lineColor" value="#000000" class="color-picker">
-          <span class="slider-val">Fekete</span>
-        </div>
-        <div class="slider-row">
-          <label>Háttér</label>
-          <input type="color" id="bgColor" value="#ffffff" class="color-picker">
-          <span class="slider-val">Fehér</span>
-        </div>
+      <!-- tool icon row: algo mode selector + param selector -->
+      <div id="tool-row">
+        <!-- algo mode buttons -->
+        <button class="tool-btn active" data-algo="squiggle-h">
+          <svg width="22" height="14" viewBox="0 0 22 14" fill="none"><path d="M1 4 Q4 1 7 4 Q10 7 13 4 Q16 1 19 4 Q21 6 21 4" stroke="currentColor" stroke-width="1.3" fill="none"/><path d="M1 10 Q4 7 7 10 Q10 13 13 10 Q16 7 19 10 Q21 12 21 10" stroke="currentColor" stroke-width="1" fill="none" opacity=".5"/></svg>
+          Vízszintes
+        </button>
+        <button class="tool-btn" data-algo="squiggle-v">
+          <svg width="14" height="22" viewBox="0 0 14 22" fill="none"><path d="M4 1 Q1 4 4 7 Q7 10 4 13 Q1 16 4 19 Q7 22 4 21" stroke="currentColor" stroke-width="1.3" fill="none"/><path d="M10 1 Q7 4 10 7 Q13 10 10 13 Q7 16 10 19 Q13 22 10 21" stroke="currentColor" stroke-width="1" fill="none" opacity=".5"/></svg>
+          Függőleges
+        </button>
+        <button class="tool-btn" data-algo="squiggle-both">
+          <svg width="18" height="18" viewBox="0 0 18 18" fill="none"><path d="M1 5 Q4 2 7 5 Q10 8 13 5 Q16 2 17 5" stroke="currentColor" stroke-width="1.2" fill="none"/><path d="M1 11 Q4 8 7 11 Q10 14 13 11 Q16 8 17 11" stroke="currentColor" stroke-width="1" fill="none" opacity=".5"/><path d="M5 1 Q2 4 5 7 Q8 10 5 13 Q2 16 5 17" stroke="currentColor" stroke-width="1" fill="none" opacity=".35"/></svg>
+          Rács
+        </button>
+        <button class="tool-btn" data-algo="spiral">
+          <svg width="20" height="20" viewBox="0 0 20 20" fill="none"><path d="M10 10 m0,-8 a8,8 0 1,1-.05,0 m0,3 a5,5 0 1,0 .05,0 m0,3 a2,2 0 1,1-.05,0" stroke="currentColor" stroke-width="1.3" fill="none"/></svg>
+          Spirál
+        </button>
+        <!-- separator -->
+        <div style="width:1px;height:32px;background:var(--border);flex-shrink:0;margin:0 2px"></div>
+        <!-- param selector buttons - filled by JS -->
+        <div id="param-btns" style="display:contents"></div>
       </div>
+    </div>
 
-      <button class="btn-primary btn-render" id="btnRender">
-        <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-          <path d="M3 8l3 3 7-7" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
-        </svg>
-        Renderelés
+    <!-- bottom nav (mobile only) -->
+    <div id="bottom-nav">
+      <button class="nav-btn active" data-sec="edit">
+        <svg width="20" height="20" viewBox="0 0 20 20" fill="none"><path d="M3 14V17h3l8.5-8.5-3-3L3 14zM16.5 5a.8.8 0 000-1.2L15 2.5a.8.8 0 00-1.2 0L12.5 3.8l3 3L16.5 5z" fill="currentColor"/></svg>
+        Szerkesztés
+      </button>
+      <button class="nav-btn" data-sec="algo">
+        <svg width="20" height="20" viewBox="0 0 20 20" fill="none"><path d="M1 7 Q5 2 9 7 Q13 12 17 7 Q19 5 19 7" stroke="currentColor" stroke-width="1.5" fill="none" stroke-linecap="round"/><path d="M1 13 Q5 8 9 13 Q13 18 17 13 Q19 11 19 13" stroke="currentColor" stroke-width="1.5" fill="none" stroke-linecap="round"/></svg>
+        Algoritmus
+      </button>
+      <button class="nav-btn" data-sec="export">
+        <svg width="20" height="20" viewBox="0 0 20 20" fill="none"><path d="M4 13v3a1 1 0 001 1h10a1 1 0 001-1v-3M10 3v10M7 7l3-4 3 4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        Mentés
       </button>
     </div>
+  </div>
+</div>
 
-    <!-- ── TAB: EXPORT ── -->
-    <div class="tab-content" id="tab-export">
-      <div class="section">
-        <div class="section-label">Fájlformátum</div>
-        <div class="format-grid">
-          <label class="format-card">
-            <input type="radio" name="format" value="svg" checked>
-            <div class="format-inner">
-              <span class="format-name">SVG</span>
-              <span class="format-desc">Plotter, lézer</span>
-            </div>
-          </label>
-          <label class="format-card">
-            <input type="radio" name="format" value="png">
-            <div class="format-inner">
-              <span class="format-name">PNG</span>
-              <span class="format-desc">Átlátszóság</span>
-            </div>
-          </label>
-          <label class="format-card">
-            <input type="radio" name="format" value="jpg">
-            <div class="format-inner">
-              <span class="format-name">JPG</span>
-              <span class="format-desc">Kis méret</span>
-            </div>
-          </label>
-        </div>
-      </div>
-
-      <div class="section">
-        <div class="section-label">Papírméret (mm)</div>
-        <div class="paper-presets">
-          <button class="paper-btn active" data-w="210" data-h="297">A4</button>
-          <button class="paper-btn" data-w="297" data-h="420">A3</button>
-          <button class="paper-btn" data-w="148" data-h="210">A5</button>
-          <button class="paper-btn" data-w="100" data-h="150">10×15</button>
-          <button class="paper-btn" data-w="0" data-h="0">Egyedi</button>
-        </div>
-        <div class="paper-custom" id="paperCustom" style="display:none">
-          <div class="slider-row">
-            <label>Szélesség (mm)</label>
-            <input type="number" id="paperW" value="210" min="50" max="1000" class="num-input">
-          </div>
-          <div class="slider-row">
-            <label>Magasság (mm)</label>
-            <input type="number" id="paperH" value="297" min="50" max="1000" class="num-input">
-          </div>
-        </div>
-      </div>
-
-      <div class="section">
-        <div class="section-label">Margó (mm)</div>
-        <div class="slider-row">
-          <label>Margó</label>
-          <input type="range" id="slMargin" min="0" max="30" value="10" class="slider">
-          <span class="slider-val" id="valMargin">10</span>
-        </div>
-      </div>
-
-      <button class="btn-primary btn-export" id="btnExport">
-        <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-          <path d="M3 10v2a1 1 0 001 1h8a1 1 0 001-1v-2M8 3v7M5 6l3-3 3 3" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
-        </svg>
-        Letöltés
-      </button>
+<!-- CROP MODAL -->
+<div id="crop-modal" class="hidden">
+  <canvas id="crop-canvas-bg"></canvas>
+  <div id="crop-region">
+    <div id="crop-box">
+      <div class="crop-corner tl"></div><div class="crop-corner tr"></div>
+      <div class="crop-corner bl"></div><div class="crop-corner br"></div>
+      <div class="crop-grid"></div>
     </div>
-  </div><!-- /panel -->
+  </div>
+  <div id="crop-bar">
+    <button class="crop-action crop-cancel" id="crop-cancel">Mégse</button>
+    <div class="crop-ratios">
+      <button class="ratio-btn active" data-ratio="free">Szabad</button>
+      <button class="ratio-btn" data-ratio="1">1:1</button>
+      <button class="ratio-btn" data-ratio="1.333">4:3</button>
+      <button class="ratio-btn" data-ratio="1.414">A4</button>
+    </div>
+    <button class="crop-action crop-apply" id="crop-apply">Alkalmaz</button>
+  </div>
+</div>
 
-</div><!-- /editor -->
+<!-- TOAST -->
+<div id="toast"></div>
 
-<!-- Hidden file input for reload -->
-<input type="file" id="fileInputReload" accept="image/*" hidden>
+<script>
+/* ═══════════════════════════════════════════
+   LEONARDRAW — app.js (inline)
+════════════════════════════════════════════ */
+'use strict';
 
-<script src="js/app.js"></script>
+// ── STATE ──────────────────────────────────
+const S = {
+  original: null,   // ImageData (original loaded)
+  cropped:  null,   // ImageData after crop/rotate
+  processed:null,   // ImageData after tone
+  paths:    null,   // rendered SVG paths []
+  algo: 'squiggle-h',
+  params: {},
+  tone: { brightness:0, contrast:0, blackPoint:0, whitePoint:255, gamma:1.0 },
+  paper: { w:210, h:297, margin:10 },
+  activeSection: 'edit',      // edit | algo | export
+  activeParamIndex: 0,        // which param the main slider controls
+  renderPending: false,
+};
+
+// ── ALGORITHM PARAM DEFINITIONS ─────────────
+// "mintavétel" = sampleSize = how many pixels per step along the sine
+const PARAMS = {
+  'squiggle-h': [
+    { id:'numLines',   label:'Vonalak száma', min:10,  max:150, step:1,   def:80,  unit:'' },
+    { id:'amplitude',  label:'Amplitúdó',     min:0.5, max:3,   step:0.05,def:1.2, unit:'' },
+    { id:'frequency',  label:'Frekvencia',    min:0.5, max:10,  step:0.5, def:3,   unit:'' },
+    { id:'sampleSize', label:'Mintavétel',    min:1,   max:8,   step:1,   def:3,   unit:'' },
+  ],
+  'squiggle-v': [
+    { id:'numLines',   label:'Vonalak száma', min:10,  max:150, step:1,   def:80,  unit:'' },
+    { id:'amplitude',  label:'Amplitúdó',     min:0.5, max:3,   step:0.05,def:1.2, unit:'' },
+    { id:'frequency',  label:'Frekvencia',    min:0.5, max:10,  step:0.5, def:3,   unit:'' },
+    { id:'sampleSize', label:'Mintavétel',    min:1,   max:8,   step:1,   def:3,   unit:'' },
+  ],
+  'squiggle-both': [
+    { id:'numLines',   label:'Vonalak száma', min:10,  max:150, step:1,   def:60,  unit:'' },
+    { id:'amplitude',  label:'Amplitúdó',     min:0.5, max:3,   step:0.05,def:1.0, unit:'' },
+    { id:'frequency',  label:'Frekvencia',    min:0.5, max:10,  step:0.5, def:3,   unit:'' },
+    { id:'sampleSize', label:'Mintavétel',    min:1,   max:8,   step:1,   def:3,   unit:'' },
+  ],
+  'spiral': [
+    { id:'numLines',   label:'Körök száma',   min:20,  max:300, step:1,   def:120, unit:'' },
+    { id:'amplitude',  label:'Amplitúdó',     min:0.5, max:3,   step:0.05,def:1.2, unit:'' },
+    { id:'frequency',  label:'Frekvencia',    min:0.5, max:8,   step:0.5, def:4,   unit:'' },
+    { id:'sampleSize', label:'Mintavétel',    min:1,   max:8,   step:1,   def:3,   unit:'' },
+  ],
+};
+
+// ── DOM ────────────────────────────────────
+const q = id => document.getElementById(id);
+const landing     = q('landing');
+const editor      = q('editor');
+const previewWrap = q('preview-wrap');
+const canvas      = q('preview-canvas');
+const spinner     = q('spinner');
+const ctx         = canvas.getContext('2d');
+const cropModal   = q('crop-modal');
+const mobileAlgo  = q('mobile-algo-strip');
+
+// ── INIT ───────────────────────────────────
+function init(){
+  setupFileLoad();
+  setupNav();
+  setupEditTab();
+  setupAlgoCards();
+  setupExport();
+  initParams('squiggle-h');
+}
+
+// ── FILE LOADING ───────────────────────────
+function setupFileLoad(){
+  // Landing file input – use label click, not direct input click to avoid double dialog
+  q('btn-choose').addEventListener('click', () => q('file-input').click());
+
+  q('file-input').addEventListener('change', e => {
+    if(e.target.files[0]) loadFile(e.target.files[0]);
+    // reset so same file can be loaded again
+    e.target.value = '';
+  });
+
+  // Drop zone
+  const dz = q('drop-zone');
+  dz.addEventListener('dragover', e => { e.preventDefault(); dz.classList.add('over'); });
+  dz.addEventListener('dragleave', () => dz.classList.remove('over'));
+  dz.addEventListener('drop', e => {
+    e.preventDefault(); dz.classList.remove('over');
+    const f = e.dataTransfer.files[0];
+    if(f && f.type.startsWith('image/')) loadFile(f);
+  });
+
+  // Editor load new
+  q('btn-load-new').addEventListener('click', () => q('file-input-2').click());
+  q('btn-load-d') && q('btn-load-d').addEventListener('click', () => q('file-input-2').click());
+  q('file-input-2').addEventListener('change', e => {
+    if(e.target.files[0]) loadFile(e.target.files[0]);
+    e.target.value = '';
+  });
+
+  // Paste
+  document.addEventListener('paste', e => {
+    const item = [...e.clipboardData.items].find(i => i.type.startsWith('image/'));
+    if(item) loadFile(item.getAsFile());
+  });
+}
+
+function loadFile(file){
+  const url = URL.createObjectURL(file);
+  const img = new Image();
+  img.onload = () => {
+    S.original = imgToData(img);
+    S.cropped  = S.original;
+    S.paths    = null;
+    applyToneAndShow();
+    showEditor();
+    URL.revokeObjectURL(url);
+  };
+  img.src = url;
+}
+
+function imgToData(img){
+  const c = document.createElement('canvas');
+  c.width = img.naturalWidth; c.height = img.naturalHeight;
+  c.getContext('2d').drawImage(img, 0, 0);
+  return c.getContext('2d').getImageData(0, 0, c.width, c.height);
+}
+
+function showEditor(){
+  landing.classList.add('hidden');
+  editor.classList.remove('hidden');
+}
+
+// ── NAV (tabs) ─────────────────────────────
+function setupNav(){
+  // mobile bottom nav
+  document.querySelectorAll('#bottom-nav .nav-btn').forEach(btn => {
+    btn.addEventListener('click', () => switchSection(btn.dataset.sec));
+  });
+  // desktop nav
+  document.querySelectorAll('#desktop-nav .dnav-btn').forEach(btn => {
+    btn.addEventListener('click', () => switchSection(btn.dataset.sec));
+  });
+  // back buttons
+  q('btn-back').addEventListener('click', goLanding);
+  q('btn-back-d') && q('btn-back-d').addEventListener('click', goLanding);
+}
+
+function goLanding(){
+  editor.classList.add('hidden');
+  landing.classList.remove('hidden');
+}
+
+function switchSection(sec){
+  S.activeSection = sec;
+  // mobile bottom nav
+  document.querySelectorAll('#bottom-nav .nav-btn').forEach(b => b.classList.toggle('active', b.dataset.sec === sec));
+  // desktop nav
+  document.querySelectorAll('#desktop-nav .dnav-btn').forEach(b => b.classList.toggle('active', b.dataset.sec === sec));
+  // section panels
+  document.querySelectorAll('.section-panel').forEach(p => p.classList.toggle('active', p.id === 'sec-'+sec));
+  // mobile algo strip
+  mobileAlgo.classList.toggle('hidden', sec !== 'algo');
+}
+
+// ── EDIT TAB ───────────────────────────────
+function setupEditTab(){
+  q('btn-rot-ccw').addEventListener('click', () => rotateCropped(-90));
+  q('btn-rot-cw').addEventListener('click',  () => rotateCropped(90));
+  q('btn-flip').addEventListener('click',    () => flipCropped());
+  q('btn-crop').addEventListener('click',    openCrop);
+
+  // tone sliders – fire on input, debounced render
+  const tones = [
+    ['sl-bright',   'v-bright',   'brightness', v=>v,         v=>v],
+    ['sl-contrast', 'v-contrast', 'contrast',   v=>v,         v=>v],
+    ['sl-black',    'v-black',    'blackPoint',  v=>v,         v=>v],
+    ['sl-white',    'v-white',    'whitePoint',  v=>v,         v=>v],
+    ['sl-gamma',    'v-gamma',    'gamma',       v=>v/100,     v=>(v/100).toFixed(1)],
+  ];
+  tones.forEach(([slId, valId, key, toState, toDisplay]) => {
+    const sl = q(slId), vl = q(valId);
+    sl.addEventListener('input', () => {
+      S.tone[key] = toState(parseFloat(sl.value));
+      vl.textContent = toDisplay(parseFloat(sl.value));
+      debounce(applyToneAndShow, 60)();
+    });
+  });
+
+  q('btn-reset-tone').addEventListener('click', () => {
+    S.tone = { brightness:0, contrast:0, blackPoint:0, whitePoint:255, gamma:1.0 };
+    [['sl-bright',0],['sl-contrast',0],['sl-black',0],['sl-white',255],['sl-gamma',100]].forEach(([id,v])=>q(id).value=v);
+    ['v-bright','v-contrast','v-black'].forEach(id=>q(id).textContent='0');
+    q('v-white').textContent='255'; q('v-gamma').textContent='1.0';
+    applyToneAndShow();
+  });
+}
+
+// ── ROTATE / FLIP ──────────────────────────
+function rotateCropped(deg){
+  if(!S.cropped) return;
+  S.cropped = rotateData(S.cropped, deg);
+  S.paths = null;
+  applyToneAndShow();
+}
+function flipCropped(){
+  if(!S.cropped) return;
+  S.cropped = flipData(S.cropped);
+  S.paths = null;
+  applyToneAndShow();
+}
+function rotateData(d, deg){
+  const {width:w,height:h} = d;
+  const cw = (deg===90||deg===-90)?h:w, ch=(deg===90||deg===-90)?w:h;
+  const c=document.createElement('canvas'); c.width=cw;c.height=ch;
+  const cx=c.getContext('2d');
+  cx.translate(cw/2,ch/2); cx.rotate(deg*Math.PI/180);
+  const t=document.createElement('canvas'); t.width=w;t.height=h;
+  t.getContext('2d').putImageData(d,0,0);
+  cx.drawImage(t,-w/2,-h/2);
+  return cx.getImageData(0,0,cw,ch);
+}
+function flipData(d){
+  const {width:w,height:h}=d;
+  const c=document.createElement('canvas'); c.width=w;c.height=h;
+  const cx=c.getContext('2d'); cx.translate(w,0);cx.scale(-1,1);
+  const t=document.createElement('canvas'); t.width=w;t.height=h;
+  t.getContext('2d').putImageData(d,0,0); cx.drawImage(t,0,0);
+  return cx.getImageData(0,0,w,h);
+}
+
+// ── TONE PROCESSING ────────────────────────
+function applyTone(imgData){
+  const {brightness,contrast,blackPoint,whitePoint,gamma} = S.tone;
+  const src = imgData.data;
+  const out = new ImageData(imgData.width, imgData.height);
+  const d = out.data;
+  const lut = new Uint8Array(256);
+  const range = Math.max(1, whitePoint - blackPoint);
+  const cf = (259*(contrast+255))/(255*(259-contrast));
+  for(let i=0;i<256;i++){
+    let v = ((i - blackPoint) / range) * 255;
+    v += brightness * 2.55;
+    v = cf*(v-128)+128;
+    if(gamma!==1.0) v = Math.pow(Math.max(0,v)/255, 1/gamma)*255;
+    lut[i] = Math.max(0, Math.min(255, Math.round(v)));
+  }
+  for(let i=0;i<src.length;i+=4){
+    d[i]=lut[src[i]]; d[i+1]=lut[src[i+1]]; d[i+2]=lut[src[i+2]]; d[i+3]=src[i+3];
+  }
+  return out;
+}
+
+function applyToneAndShow(){
+  if(!S.cropped) return;
+  S.processed = applyTone(S.cropped);
+  // If paths exist, re-render; else show processed image
+  if(S.paths){
+    S.paths = null; // force re-render after tone change
+  }
+  drawToCanvas();
+  scheduleRender();
+}
+
+function drawToCanvas(){
+  if(!S.processed) return;
+  const img = S.processed;
+  const wrap = previewWrap;
+  const maxW = wrap.clientWidth||400, maxH = wrap.clientHeight||400;
+  const scale = Math.min(maxW/img.width, maxH/img.height, 1);
+  canvas.width  = Math.round(img.width*scale);
+  canvas.height = Math.round(img.height*scale);
+  const t = document.createElement('canvas');
+  t.width=img.width; t.height=img.height;
+  t.getContext('2d').putImageData(img,0,0);
+  ctx.clearRect(0,0,canvas.width,canvas.height);
+  ctx.drawImage(t,0,0,canvas.width,canvas.height);
+}
+
+// ── AUTO RENDER (debounced) ────────────────
+let renderTimer = null;
+function scheduleRender(){
+  clearTimeout(renderTimer);
+  renderTimer = setTimeout(runRender, 300);
+}
+
+// ── CROP ───────────────────────────────────
+let cropS = {};
+function openCrop(){
+  if(!S.cropped) return;
+  cropModal.classList.remove('hidden');
+  // draw image on crop bg canvas
+  const bg = q('crop-canvas-bg');
+  const region = q('crop-region');
+  bg.width = window.innerWidth; bg.height = window.innerHeight;
+  const bgCtx = bg.getContext('2d');
+  bgCtx.fillStyle='#0a0a0a'; bgCtx.fillRect(0,0,bg.width,bg.height);
+  const img=S.cropped;
+  const scale=Math.min(bg.width/img.width, (bg.height-60)/img.height)*0.92;
+  const dw=img.width*scale, dh=img.height*scale;
+  const dx=(bg.width-dw)/2, dy=((bg.height-60)-dh)/2;
+  const t=document.createElement('canvas'); t.width=img.width;t.height=img.height;
+  t.getContext('2d').putImageData(img,0,0);
+  bgCtx.drawImage(t,dx,dy,dw,dh);
+  cropS={ix:dx,iy:dy,iw:dw,ih:dh,x:dx,y:dy,w:dw,h:dh,scale,imgW:img.width,imgH:img.height,ratio:'free'};
+  positionCropBox();
+  setupCropInteraction();
+  document.querySelectorAll('.ratio-btn').forEach(b=>b.classList.toggle('active',b.dataset.ratio==='free'));
+  document.querySelectorAll('.ratio-btn').forEach(b=>{
+    b.onclick=()=>{
+      document.querySelectorAll('.ratio-btn').forEach(x=>x.classList.remove('active'));
+      b.classList.add('active');
+      cropS.ratio=b.dataset.ratio;
+      if(cropS.ratio!=='free') enforceCropRatio();
+      positionCropBox();
+    };
+  });
+  q('crop-cancel').onclick=()=>cropModal.classList.add('hidden');
+  q('crop-apply').onclick=applyCrop;
+}
+function positionCropBox(){
+  const b=q('crop-box');
+  b.style.left=cropS.x+'px'; b.style.top=cropS.y+'px';
+  b.style.width=cropS.w+'px'; b.style.height=cropS.h+'px';
+}
+function enforceCropRatio(){
+  const r=parseFloat(cropS.ratio);
+  cropS.h=cropS.w/r;
+  if(cropS.y+cropS.h>cropS.iy+cropS.ih){ cropS.h=cropS.iy+cropS.ih-cropS.y; cropS.w=cropS.h*r; }
+}
+function setupCropInteraction(){
+  const box=q('crop-box');
+  let drag={on:false,type:'',sx:0,sy:0,bx:0,by:0,bw:0,bh:0};
+  function down(e,type){
+    e.preventDefault(); const pt=e.touches?e.touches[0]:e;
+    drag={on:true,type,sx:pt.clientX,sy:pt.clientY,bx:cropS.x,by:cropS.y,bw:cropS.w,bh:cropS.h};
+    document.addEventListener('mousemove',move); document.addEventListener('touchmove',move,{passive:false});
+    document.addEventListener('mouseup',up); document.addEventListener('touchend',up);
+  }
+  function move(e){ if(!drag.on)return; e.preventDefault();
+    const pt=e.touches?e.touches[0]:e; const dx=pt.clientX-drag.sx,dy=pt.clientY-drag.sy;
+    const {ix,iy,iw,ih}=cropS; const mn=30;
+    if(drag.type==='move'){ cropS.x=Math.max(ix,Math.min(ix+iw-drag.bw,drag.bx+dx)); cropS.y=Math.max(iy,Math.min(iy+ih-drag.bh,drag.by+dy)); }
+    else if(drag.type==='br'){ cropS.w=Math.max(mn,Math.min(ix+iw-drag.bx,drag.bw+dx)); cropS.h=Math.max(mn,Math.min(iy+ih-drag.by,drag.bh+dy)); }
+    else if(drag.type==='bl'){ const nw=Math.max(mn,drag.bw-dx); cropS.x=drag.bx+drag.bw-nw; cropS.w=nw; cropS.h=Math.max(mn,Math.min(iy+ih-drag.by,drag.bh+dy)); }
+    else if(drag.type==='tr'){ cropS.w=Math.max(mn,Math.min(ix+iw-drag.bx,drag.bw+dx)); const nh=Math.max(mn,drag.bh-dy); cropS.y=drag.by+drag.bh-nh; cropS.h=nh; }
+    else if(drag.type==='tl'){ const nw=Math.max(mn,drag.bw-dx); cropS.x=drag.bx+drag.bw-nw; cropS.w=nw; const nh=Math.max(mn,drag.bh-dy); cropS.y=drag.by+drag.bh-nh; cropS.h=nh; }
+    if(cropS.ratio!=='free') enforceCropRatio();
+    positionCropBox();
+  }
+  function up(){ drag.on=false;
+    document.removeEventListener('mousemove',move); document.removeEventListener('touchmove',move);
+    document.removeEventListener('mouseup',up); document.removeEventListener('touchend',up);
+  }
+  // remove old listeners by cloning
+  const newBox=box.cloneNode(true); box.parentNode.replaceChild(newBox,box);
+  const nb=q('crop-box');
+  nb.addEventListener('mousedown',e=>down(e,'move')); nb.addEventListener('touchstart',e=>down(e,'move'),{passive:false});
+  nb.querySelectorAll('.crop-corner').forEach(c=>{
+    const t=[...c.classList][1];
+    c.addEventListener('mousedown',e=>{e.stopPropagation();down(e,t)});
+    c.addEventListener('touchstart',e=>{e.stopPropagation();down(e,t)},{passive:false});
+  });
+}
+function applyCrop(){
+  const {x,y,w,h,ix,iy,scale,imgW,imgH}=cropS;
+  const sx=Math.max(0,Math.round((x-ix)/scale)), sy=Math.max(0,Math.round((y-iy)/scale));
+  const sw=Math.min(imgW-sx,Math.round(w/scale)), sh=Math.min(imgH-sy,Math.round(h/scale));
+  if(sw<1||sh<1)return;
+  const t=document.createElement('canvas'); t.width=imgW;t.height=imgH;
+  t.getContext('2d').putImageData(S.cropped,0,0);
+  const o=document.createElement('canvas'); o.width=sw;o.height=sh;
+  o.getContext('2d').drawImage(t,sx,sy,sw,sh,0,0,sw,sh);
+  S.cropped=o.getContext('2d').getImageData(0,0,sw,sh);
+  S.paths=null;
+  cropModal.classList.add('hidden');
+  applyToneAndShow();
+}
+
+// ── ALGO CARDS (desktop) ───────────────────
+function setupAlgoCards(){
+  document.querySelectorAll('.algo-card').forEach(card=>{
+    card.addEventListener('click',()=>selectAlgo(card.dataset.algo, 'desktop'));
+  });
+  // mobile tool-row algo buttons
+  document.querySelectorAll('#tool-row .tool-btn[data-algo]').forEach(btn=>{
+    btn.addEventListener('click',()=>selectAlgo(btn.dataset.algo, 'mobile'));
+  });
+}
+function selectAlgo(algo, source){
+  S.algo=algo;
+  S.activeParamIndex=0;
+  // sync desktop cards
+  document.querySelectorAll('.algo-card').forEach(c=>c.classList.toggle('active',c.dataset.algo===algo));
+  // sync mobile tool btns
+  document.querySelectorAll('#tool-row .tool-btn[data-algo]').forEach(b=>b.classList.toggle('active',b.dataset.algo===algo));
+  initParams(algo);
+  scheduleRender();
+}
+
+// ── PARAMS ─────────────────────────────────
+function initParams(algo){
+  const defs = PARAMS[algo]||[];
+  S.params={};
+  defs.forEach(p=>{ S.params[p.id]=p.def; });
+
+  // Desktop: render full param list in algo-params
+  const ap=q('algo-params'); ap.innerHTML='';
+  const grp=document.createElement('div'); grp.className='aparam-group'; ap.appendChild(grp);
+  defs.forEach(p=>{
+    const row=document.createElement('div'); row.className='aparam-row';
+    row.innerHTML=`<label>${p.label}</label><input type="range" min="${p.min}" max="${p.max}" step="${p.step}" value="${p.def}"><span class="ap-val" id="apv-${p.id}">${p.def}</span>`;
+    grp.appendChild(row);
+    const sl=row.querySelector('input');
+    sl.addEventListener('input',()=>{
+      S.params[p.id]=parseFloat(sl.value);
+      q('apv-'+p.id).textContent=sl.value;
+      scheduleRender();
+    });
+  });
+
+  // Mobile: build param selector buttons
+  buildMobileParamUI(algo);
+}
+
+function buildMobileParamUI(algo){
+  const defs=PARAMS[algo]||[];
+  const container=q('param-btns'); container.innerHTML='';
+  defs.forEach((p,i)=>{
+    const btn=document.createElement('button');
+    btn.className='tool-btn'+(i===0?' active':'');
+    btn.innerHTML=`<span style="font-size:11px;font-weight:600">${p.label.split(' ')[0]}</span>`;
+    btn.addEventListener('click',()=>{
+      S.activeParamIndex=i;
+      container.querySelectorAll('.tool-btn').forEach((b,j)=>b.classList.toggle('active',j===i));
+      updateMainSlider(algo, i);
+    });
+    container.appendChild(btn);
+  });
+  updateMainSlider(algo, 0);
+}
+
+function updateMainSlider(algo, idx){
+  const defs=PARAMS[algo]||[];
+  const p=defs[idx];
+  if(!p) return;
+  const sl=q('main-slider'), lbl=q('active-param-name'), val=q('slider-val');
+  const smin=q('sl-min'), smax=q('sl-max');
+  sl.min=p.min; sl.max=p.max; sl.step=p.step; sl.value=S.params[p.id]??p.def;
+  lbl.textContent=p.label;
+  val.textContent=sl.value;
+  smin.textContent=p.min;
+  smax.textContent=p.max;
+  // remove old listener, add new
+  const newSl=sl.cloneNode(true);
+  sl.parentNode.replaceChild(newSl,sl);
+  newSl.addEventListener('input',()=>{
+    S.params[p.id]=parseFloat(newSl.value);
+    q('slider-val').textContent=newSl.value;
+    // sync desktop slider
+    const deskSl=document.querySelector(`#algo-params input[type=range]:nth-of-type(${idx+1})`);
+    // simpler: find by value context
+    const rows=document.querySelectorAll('.aparam-row');
+    if(rows[idx]){ const dsl=rows[idx].querySelector('input'); if(dsl){dsl.value=newSl.value; q('apv-'+p.id).textContent=newSl.value;} }
+    scheduleRender();
+  });
+}
+
+// ── RENDER ─────────────────────────────────
+function runRender(){
+  if(!S.processed) return;
+  spinner.classList.remove('hidden');
+  setTimeout(()=>{
+    try{
+      S.paths = renderAlgo(S.processed, S.algo, S.params);
+      drawPaths(S.paths, S.processed.width, S.processed.height);
+    }catch(e){ console.error(e); showToast('Render hiba'); }
+    spinner.classList.add('hidden');
+  }, 20);
+}
+
+// ── GRAY MAP ───────────────────────────────
+function grayMap(imgData){
+  const {width:w,height:h,data}=imgData;
+  const g=new Float32Array(w*h);
+  for(let i=0;i<w*h;i++) g[i]=(0.299*data[i*4]+0.587*data[i*4+1]+0.114*data[i*4+2])/255;
+  return {g,w,h};
+}
+function sampleG(g,w,h,x,y){
+  return g[Math.max(0,Math.min(h-1,y|0))*w+Math.max(0,Math.min(w-1,x|0))];
+}
+
+// ══ THE SQUIGGLE ALGORITHMS ════════════════
+/*
+  Based on SquiggleDraw by Gregg Wygonik.
+  Each horizontal (or vertical) row is a sine wave.
+  Amplitude of sine = f(1 - brightness).
+  sampleSize = step in pixels between amplitude samples along the row.
+  frequency  = how many full sine cycles per sampleSize pixels.
+  numLines   = how many rows/columns.
+  amplitude  = max amplitude multiplier (in units of row spacing).
+*/
+function renderAlgo(imgData, algo, params){
+  const {g,w,h}=grayMap(imgData);
+  if(algo==='squiggle-h') return squiggleH(g,w,h,params);
+  if(algo==='squiggle-v') return squiggleV(g,w,h,params);
+  if(algo==='squiggle-both') return [...squiggleH(g,w,h,params),...squiggleV(g,w,h,params)];
+  if(algo==='spiral') return squiggleSpiral(g,w,h,params);
+  return [];
+}
+
+function squiggleH(g,w,h,{numLines,amplitude,frequency,sampleSize}){
+  numLines=Math.round(numLines); sampleSize=Math.max(1,Math.round(sampleSize));
+  const lineSpacing=h/numLines;
+  const maxAmp=lineSpacing*amplitude*0.5; // max wave height in pixels
+  const paths=[];
+
+  for(let li=0;li<numLines;li++){
+    const y0=(li+0.5)*lineSpacing;
+    let d='', first=true, xPos=0, angle=0;
+
+    while(xPos<=w){
+      const brightness=sampleG(g,w,h,xPos,y0);
+      const dark=1-brightness;
+      const amp=dark*maxAmp;
+      // advance angle proportional to frequency and sampleSize
+      const yOff=Math.sin(angle)*amp;
+      const px=xPos, py=y0+yOff;
+      if(first){ d=`M${px.toFixed(1)},${py.toFixed(1)}`; first=false; }
+      else d+=` L${px.toFixed(1)},${py.toFixed(1)}`;
+      angle+=frequency*0.2; // frequency controls how fast we cycle
+      xPos+=sampleSize;
+    }
+    if(d) paths.push(d);
+  }
+  return paths;
+}
+
+function squiggleV(g,w,h,{numLines,amplitude,frequency,sampleSize}){
+  numLines=Math.round(numLines); sampleSize=Math.max(1,Math.round(sampleSize));
+  const colSpacing=w/numLines;
+  const maxAmp=colSpacing*amplitude*0.5;
+  const paths=[];
+
+  for(let li=0;li<numLines;li++){
+    const x0=(li+0.5)*colSpacing;
+    let d='', first=true, yPos=0, angle=0;
+
+    while(yPos<=h){
+      const brightness=sampleG(g,w,h,x0,yPos);
+      const dark=1-brightness;
+      const amp=dark*maxAmp;
+      const xOff=Math.sin(angle)*amp;
+      const px=x0+xOff, py=yPos;
+      if(first){ d=`M${px.toFixed(1)},${py.toFixed(1)}`; first=false; }
+      else d+=` L${px.toFixed(1)},${py.toFixed(1)}`;
+      angle+=frequency*0.2;
+      yPos+=sampleSize;
+    }
+    if(d) paths.push(d);
+  }
+  return paths;
+}
+
+function squiggleSpiral(g,w,h,{numLines,amplitude,frequency,sampleSize}){
+  const cx=w/2, cy=h/2;
+  const maxR=Math.min(w,h)/2;
+  const totalTurns=Math.round(numLines);
+  const totalAngle=totalTurns*Math.PI*2;
+  // sampleSize controls angular step
+  const angStep=(sampleSize/maxR)*2;
+  const paths=[];
+  let d='', first=true, angle=0;
+
+  while(angle<totalAngle){
+    const t=angle/totalAngle;
+    const r=t*maxR;
+    const px0=cx+Math.cos(angle)*r, py0=cy+Math.sin(angle)*r;
+    const brightness=sampleG(g,w,h,px0,py0);
+    const dark=1-brightness;
+    const maxAmp=(maxR/totalTurns)*amplitude*0.5;
+    const amp=dark*maxAmp;
+    const ripple=Math.sin(angle*frequency)*amp;
+    const rr=r+ripple;
+    const px=cx+Math.cos(angle)*rr, py=cy+Math.sin(angle)*rr;
+    if(first){ d=`M${px.toFixed(1)},${py.toFixed(1)}`; first=false; }
+    else d+=` L${px.toFixed(1)},${py.toFixed(1)}`;
+    angle+=angStep;
+  }
+  if(d) paths.push(d);
+  return paths;
+}
+
+// ── DRAW PATHS TO CANVAS ───────────────────
+function drawPaths(paths, imgW, imgH){
+  const maxW=previewWrap.clientWidth||600, maxH=previewWrap.clientHeight||600;
+  const scale=Math.min(maxW/imgW, maxH/imgH, 1);
+  canvas.width=Math.round(imgW*scale); canvas.height=Math.round(imgH*scale);
+  ctx.fillStyle='#ffffff';
+  ctx.fillRect(0,0,canvas.width,canvas.height);
+  ctx.strokeStyle='#000000';
+  ctx.lineWidth=Math.max(0.4, scale*0.6);
+  ctx.lineCap='round'; ctx.lineJoin='round';
+  ctx.save(); ctx.scale(scale,scale);
+  paths.forEach(d=>{ const p=new Path2D(d); ctx.stroke(p); });
+  ctx.restore();
+}
+
+// ── EXPORT ─────────────────────────────────
+function setupExport(){
+  document.querySelectorAll('.paper-btn').forEach(b=>{
+    b.addEventListener('click',()=>{
+      document.querySelectorAll('.paper-btn').forEach(x=>x.classList.remove('active'));
+      b.classList.add('active');
+      S.paper.w=parseInt(b.dataset.pw); S.paper.h=parseInt(b.dataset.ph);
+    });
+  });
+  q('sl-margin').addEventListener('input',e=>{ S.paper.margin=parseInt(e.target.value); q('v-margin').textContent=e.target.value; });
+  q('btn-export').addEventListener('click', doExport);
+}
+
+function doExport(){
+  if(!S.paths){ showToast('Nincs render — kérjük várjon...'); return; }
+  const fmt=document.querySelector('input[name="fmt"]:checked').value;
+  if(fmt==='svg') exportSVG();
+  else exportRaster(fmt);
+}
+
+function exportSVG(){
+  const {w:pw,h:ph,margin:pm}=S.paper;
+  const imgW=S.processed.width, imgH=S.processed.height;
+  const avW=pw-pm*2, avH=ph-pm*2;
+  const sc=Math.min(avW/imgW, avH/imgH);
+  const dw=imgW*sc, dh=imgH*sc;
+  const ox=pm+(avW-dw)/2, oy=pm+(avH-dh)/2;
+
+  const pathsStr=S.paths.map(d=>{
+    const sd=d.replace(/(-?\d+\.?\d*),(-?\d+\.?\d*)/g,(_,x,y)=>`${(parseFloat(x)*sc+ox).toFixed(2)},${(parseFloat(y)*sc+oy).toFixed(2)}`);
+    return `  <path d="${sd}" fill="none" stroke="#000000" stroke-width="0.3" stroke-linecap="round" stroke-linejoin="round"/>`;
+  }).join('\n');
+
+  const svg=`<?xml version="1.0" encoding="UTF-8"?>\n<svg xmlns="http://www.w3.org/2000/svg" width="${pw}mm" height="${ph}mm" viewBox="0 0 ${pw} ${ph}">\n  <rect width="${pw}" height="${ph}" fill="#ffffff"/>\n${pathsStr}\n</svg>`;
+  downloadBlob(new Blob([svg],{type:'image/svg+xml'}), 'leonardraw.svg');
+}
+
+function exportRaster(fmt){
+  const {w:pw,h:ph,margin:pm}=S.paper;
+  const dpi=150, mmpIn=25.4;
+  const cw=Math.round(pw/mmpIn*dpi), ch=Math.round(ph/mmpIn*dpi);
+  const c=document.createElement('canvas'); c.width=cw;c.height=ch;
+  const cc=c.getContext('2d');
+  cc.fillStyle='#ffffff'; cc.fillRect(0,0,cw,ch);
+  const imgW=S.processed.width, imgH=S.processed.height;
+  const mxPx=pm/mmpIn*dpi;
+  const avW=cw-mxPx*2, avH=ch-mxPx*2;
+  const sc=Math.min(avW/imgW, avH/imgH);
+  const ox=mxPx+(avW-imgW*sc)/2, oy=mxPx+(avH-imgH*sc)/2;
+  cc.strokeStyle='#000000'; cc.lineWidth=Math.max(0.5,sc*0.4);
+  cc.lineCap='round'; cc.lineJoin='round';
+  cc.save(); cc.translate(ox,oy); cc.scale(sc,sc);
+  S.paths.forEach(d=>{ cc.stroke(new Path2D(d)); });
+  cc.restore();
+  const mime=fmt==='jpg'?'image/jpeg':'image/png';
+  c.toBlob(b=>downloadBlob(b,`leonardraw.${fmt}`),mime,0.92);
+}
+
+function downloadBlob(blob, name){
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement('a'); a.href=url;a.download=name;a.click();
+  setTimeout(()=>URL.revokeObjectURL(url),1000);
+  showToast('✓ '+name+' letöltve');
+}
+
+// ── TOAST ──────────────────────────────────
+let _tt;
+function showToast(msg){
+  const t=q('toast'); t.textContent=msg; t.classList.add('show');
+  clearTimeout(_tt); _tt=setTimeout(()=>t.classList.remove('show'),2500);
+}
+
+// ── DEBOUNCE ───────────────────────────────
+const _db={};
+function debounce(fn,delay){
+  return function(...a){
+    const k=fn.name||'fn';
+    clearTimeout(_db[k]); _db[k]=setTimeout(()=>fn(...a),delay);
+  };
+}
+
+// ── RESIZE ─────────────────────────────────
+window.addEventListener('resize', ()=>{
+  if(S.paths) drawPaths(S.paths,S.processed.width,S.processed.height);
+  else if(S.processed) drawToCanvas();
+});
+
+init();
+</script>
 </body>
 </html>
