@@ -68,11 +68,10 @@ input[type=range]{cursor:pointer}
   cursor:grab; touch-action:none; 
 }
 #preview-area:active{cursor:grabbing;}
-/* The canvas now represents a real physical paper sheet */
 #preview-canvas{display:block; max-width:95%; max-height:95%; box-shadow:0 0 30px rgba(0,0,0,0.8)}
 
 .spin{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;
-  background:rgba(14,14,15,.6);backdrop-filter:blur(4px);pointer-events:none}
+  background:rgba(14,14,15,.8);backdrop-filter:blur(4px);pointer-events:none;z-index:50}
 .sring{width:34px;height:34px;border:2px solid var(--border2);border-top-color:var(--accent);
   border-radius:50%;animation:sp .7s linear infinite}
 @keyframes sp{to{transform:rotate(360deg)}}
@@ -305,8 +304,7 @@ input[type=range]{cursor:pointer}
       <div id="stats-row-m" style="display:flex;align-items:center;justify-content:center;gap:12px;padding:4px;background:var(--bg3);border-bottom:1px solid var(--border);font-family:var(--mono);font-size:10px;color:var(--fg-dim);">
         Vonal: <span id="stm-len" style="color:var(--accent);font-weight:600">0m</span> Idő: <span id="stm-time" style="color:var(--accent);font-weight:600">0p</span>
       </div>
-      <div id="mode-row">
-        </div>
+      <div id="mode-row"></div>
       <div id="param-lbl-row"><span id="active-plbl">Frekvencia</span></div>
       <div id="main-sl-row">
         <span class="sle" id="sl-min">5</span>
@@ -330,7 +328,7 @@ input[type=range]{cursor:pointer}
             <button class="e-btn" id="btn-zo"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35M8 11h6"/></svg></button>
             <button class="e-btn" id="btn-rot"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 11-9-9c2.52 0 4.93 1 6.74 2.74L21 8M21 3v5h-5"/></svg></button>
           </div>
-          <div style="font-size:10px;color:var(--fg-muted);margin-top:8px;text-align:center">💡 Tipp: Nagyítsd és mozgasd a képet közvetlenül az előnézetben!</div>
+          <div style="font-size:10px;color:var(--fg-muted);margin-top:8px;text-align:center">💡 Tipp: A Ditherelés intenzitását a Fényerő/Gamma állításával szabályozhatod!</div>
         </div>
         <div>
           <div class="clbl">Tónuskorrekció</div>
@@ -339,11 +337,12 @@ input[type=range]{cursor:pointer}
             <div class="trow"><label>Kontraszt</label><input type="range" class="tsl" id="tsl-contrast" min="-100" max="100" value="0"><span class="tv" id="tv-contrast">0</span></div>
             <div class="trow"><label>Fekete pont</label><input type="range" class="tsl" id="tsl-black" min="0" max="128" value="0"><span class="tv" id="tv-black">0</span></div>
             <div class="trow"><label>Fehér pont</label><input type="range" class="tsl" id="tsl-white" min="128" max="255" value="255"><span class="tv" id="tv-white">255</span></div>
-            <div class="trow"><label title="A középtónusokat (szürkéket) sötétíti/világosítja a részletek megőrzésével">Gamma</label><input type="range" class="tsl" id="tsl-gamma" min="50" max="200" value="100"><span class="tv" id="tv-gamma">1.0</span></div>
+            <div class="trow"><label>Gamma</label><input type="range" class="tsl" id="tsl-gamma" min="50" max="200" value="100"><span class="tv" id="tv-gamma">1.0</span></div>
           </div>
           <button class="btn-ghost" id="btn-reset-tone" style="margin-top:8px">Visszaállítás</button>
         </div>
       </div>
+      
       <div class="cpanel" id="cp-export">
         <div><div class="clbl">Formátum</div>
           <div class="fmt-grid">
@@ -363,7 +362,6 @@ input[type=range]{cursor:pointer}
     </div>
   </div>
 </div>
-
 <div id="toast"></div>
 
 <script>
@@ -379,16 +377,16 @@ const P_SIZES = {
 
 const S = {
   img:null, isLandscape:false, processed:null, paths:null,
-  cW:0, cH:0, // Belső rajzfelület (px)
+  cW:0, cH:0, 
   panX:0, panY:0, zoom:1,
   algo:'squiggle-h',
-  params:{},
+  params:{frequency:120, lineCount:25, amplitude:1.5, sampling:1.3, strokeW:0.3},
   tone:{brightness:0,contrast:0,blackPoint:0,whitePoint:255,gamma:1.0},
   paper:{type:'A4', w:210, h:297, margin:20},
   activeParamIdx:0, activeSection:'edit',
 };
 
-// ── PARAMÉTEREK (Kibővítve a két új algoritmussal) ──
+// ── PARAMÉTEREK ──
 const PDEFS={
   'squiggle-h':[
     {id:'frequency', label:'Frekvencia',    min:5,   max:256, step:1,   def:120},
@@ -419,14 +417,14 @@ const PDEFS={
     {id:'strokeW',   label:'Vonalvastag',   min:0.1, max:3.0, step:0.1, def:0.3},
   ],
   'tsp':[
-    {id:'pointCount',label:'Pontok száma',  min:500, max:8000, step:100,def:3000},
-    {id:'strokeW',   label:'Vonalvastag',   min:0.1, max:2.0, step:0.1, def:0.2},
+    {id:'pointCount',label:'Pontok száma',  min:1000,max:10000,step:100,def:4000},
+    {id:'strokeW',   label:'Vonalvastag',   min:0.1, max:2.0,  step:0.1,def:0.2},
   ],
   'string':[
-    {id:'pinCount',  label:'Szegecsek',     min:100, max:500, step:1,   def:288},
+    {id:'pinCount',  label:'Szegecsek',     min:100, max:500,  step:1,  def:288},
     {id:'lineCount', label:'Fonalak száma', min:500, max:6000, step:100,def:2500},
-    {id:'weight',    label:'Kivonás',       min:1,   max:50,  step:1,   def:15},
-    {id:'strokeW',   label:'Vonalvastag',   min:0.1, max:1.0, step:0.1, def:0.2},
+    {id:'weight',    label:'Kivonás',       min:1,   max:50,   step:1,  def:15},
+    {id:'strokeW',   label:'Vonalvastag',   min:0.1, max:1.0,  step:0.1,def:0.2},
   ]
 };
 
@@ -435,8 +433,8 @@ const CARDS=[
   {a:'squiggle-v',l:'Függőleges',s:`<svg width="18" height="38" viewBox="0 0 18 38" fill="none"><path d="M5 1 Q1 5.5 5 10 Q9 14.5 5 19 Q1 23.5 5 28 Q9 32.5 5 37" stroke="currentColor" stroke-width="1.4" fill="none" stroke-linecap="round"/><path d="M13 1 Q9 5.5 13 10 Q17 14.5 13 19 Q9 23.5 13 28 Q17 32.5 13 37" stroke="currentColor" stroke-width="1" fill="none" stroke-linecap="round" opacity=".4"/></svg>`},
   {a:'squiggle-both',l:'Rács',s:`<svg width="32" height="32" viewBox="0 0 32 32" fill="none"><path d="M1 8 Q5 3 9 8 Q13 13 16 8 Q19 3 23 8 Q27 13 31 8" stroke="currentColor" stroke-width="1.2" fill="none" stroke-linecap="round"/><path d="M1 20 Q5 15 9 20 Q13 25 16 20 Q19 15 23 20 Q27 25 31 20" stroke="currentColor" stroke-width="1" fill="none" stroke-linecap="round" opacity=".4"/><path d="M8 1 Q3 5 8 9 Q13 13 8 16 Q3 19 8 23 Q13 27 8 31" stroke="currentColor" stroke-width="1" fill="none" stroke-linecap="round" opacity=".3"/></svg>`},
   {a:'spiral',l:'Spirál',s:`<svg width="34" height="34" viewBox="0 0 34 34" fill="none"><path d="M17 17 m0,-13 a13,13 0 1,1-.1,0 m0,4 a9,9 0 1,0 .1,0 m0,4 a5,5 0 1,1-.1,0" stroke="currentColor" stroke-width="1.3" fill="none"/></svg>`},
-  {a:'tsp',l:'TSP (Egyvonal)',s:`<svg width="34" height="34" viewBox="0 0 34 34" fill="none"><path d="M5 10 L15 5 L28 12 L20 25 L8 28 Z" stroke="currentColor" stroke-width="1.3" stroke-linejoin="round" fill="none"/><circle cx="5" cy="10" r="1.5" fill="currentColor"/><circle cx="15" cy="5" r="1.5" fill="currentColor"/><circle cx="28" cy="12" r="1.5" fill="currentColor"/><circle cx="20" cy="25" r="1.5" fill="currentColor"/><circle cx="8" cy="28" r="1.5" fill="currentColor"/></svg>`},
-  {a:'string',l:'Fonal (String)',s:`<svg width="34" height="34" viewBox="0 0 34 34" fill="none"><circle cx="17" cy="17" r="14" stroke="currentColor" stroke-width="1" fill="none"/><path d="M17 3 L7 27 L28 12 L5 12 L25 28 Z" stroke="currentColor" stroke-width="1.2" opacity="0.8" fill="none"/></svg>`}
+  {a:'tsp',l:'Egyvonalas',s:`<svg width="34" height="34" viewBox="0 0 34 34" fill="none"><path d="M5 10 L15 5 L28 12 L20 25 L8 28 Z" stroke="currentColor" stroke-width="1.3" stroke-linejoin="round" fill="none"/><circle cx="5" cy="10" r="1.5" fill="currentColor"/><circle cx="15" cy="5" r="1.5" fill="currentColor"/><circle cx="28" cy="12" r="1.5" fill="currentColor"/><circle cx="20" cy="25" r="1.5" fill="currentColor"/><circle cx="8" cy="28" r="1.5" fill="currentColor"/></svg>`},
+  {a:'string',l:'Fonal Art',s:`<svg width="34" height="34" viewBox="0 0 34 34" fill="none"><circle cx="17" cy="17" r="14" stroke="currentColor" stroke-width="1" fill="none"/><path d="M17 3 L7 27 L28 12 L5 12 L25 28 Z" stroke="currentColor" stroke-width="1.2" opacity="0.8" fill="none"/></svg>`}
 ];
 
 const $=id=>document.getElementById(id);
@@ -477,32 +475,25 @@ function loadFile(f){
   };
   img.src=url;
 }
-
 function updatePaperSize() {
   const p = P_SIZES[S.paper.type];
   if(S.isLandscape) { S.paper.w = p.l; S.paper.h = p.s; }
   else { S.paper.w = p.s; S.paper.h = p.l; }
   S.paper.margin = p.m;
 }
-
 function resetView() {
   if(!S.img) return;
   const drawW_mm = S.paper.w - 2 * S.paper.margin;
   const drawH_mm = S.paper.h - 2 * S.paper.margin;
-  
   const MAX_DIM = 750;
   if(drawW_mm > drawH_mm) {
-      S.cW = MAX_DIM;
-      S.cH = Math.round(MAX_DIM * (drawH_mm / drawW_mm));
+      S.cW = MAX_DIM; S.cH = Math.round(MAX_DIM * (drawH_mm / drawW_mm));
   } else {
-      S.cH = MAX_DIM;
-      S.cW = Math.round(MAX_DIM * (drawW_mm / drawH_mm));
+      S.cH = MAX_DIM; S.cW = Math.round(MAX_DIM * (drawW_mm / drawH_mm));
   }
-  
   S.zoom = Math.max(S.cW/S.img.width, S.cH/S.img.height);
   S.panX = (S.cW - S.img.width*S.zoom)/2;
   S.panY = (S.cH - S.img.height*S.zoom)/2;
-  
   S.paths = null;
   applyToneAndDraw();
   debRender();
@@ -531,13 +522,12 @@ function buildUI() {
   const cD = $('d-ac-grid'); cD.innerHTML='';
   const cM = $('mode-row'); cM.innerHTML='';
   CARDS.forEach(c=>{
-    // Desktop
     const bD=document.createElement('button');
     bD.className='dac'; bD.dataset.algo=c.a;
     bD.innerHTML=`<div class="dac-icon">${c.s}</div><span>${c.l}</span>`;
     bD.onclick=()=>selectAlgo(c.a);
     cD.appendChild(bD);
-    // Mobile
+    
     const bM=document.createElement('button');
     bM.className='mode-btn'; bM.dataset.algo=c.a;
     bM.innerHTML=`${c.s}${c.l}`;
@@ -553,7 +543,6 @@ function initParams(algo){
   S.params={};defs.forEach(p=>S.params[p.id]=p.def);
   S.activeParamIdx=0;
   
-  // Mobile params
   const c=$('param-btns');c.innerHTML='';
   defs.forEach((p,i)=>{
     const b=document.createElement('button');
@@ -564,7 +553,6 @@ function initParams(algo){
     c.appendChild(b);
   });
   
-  // Desktop params
   const ctr=$('d-params');ctr.innerHTML='';
   defs.forEach(p=>{
     const row=document.createElement('div');row.className='d-prow';
@@ -578,7 +566,6 @@ function initParams(algo){
       debRender();
     };
   });
-  
   setMainSlider(algo,0);
 }
 function fmt(p,v){return p.step<1 ? parseFloat(v).toFixed(1) : Math.round(v)+'';}
@@ -642,7 +629,6 @@ function setupPanZoom() {
       const sc = Math.min((pa.clientWidth-20)/pw, (pa.clientHeight-20)/ph);
       return sc * ((pw - 2*pm) / S.cW);
   }
-  
   pa.addEventListener('mousedown', e => { if(!S.img) return; isDragging = true; lastX = e.clientX; lastY = e.clientY; });
   window.addEventListener('mousemove', e => {
       if(!isDragging) return;
@@ -651,7 +637,6 @@ function setupPanZoom() {
       S.paths = null; applyToneAndDraw(); debRender();
   });
   window.addEventListener('mouseup', () => { isDragging = false; });
-  
   pa.addEventListener('wheel', e => {
       if(!S.img) return; e.preventDefault();
       const zoomFactor = e.deltaY > 0 ? 0.9 : 1.1;
@@ -660,11 +645,9 @@ function setupPanZoom() {
       const osc = sc * ((pw - 2*pm) / S.cW);
       const rect = pc.getBoundingClientRect();
       const mx = (e.clientX - rect.left - pm*sc) / osc, my = (e.clientY - rect.top - pm*sc) / osc;
-      
       S.panX = mx - (mx - S.panX) * zoomFactor; S.panY = my - (my - S.panY) * zoomFactor; S.zoom *= zoomFactor;
       S.paths = null; applyToneAndDraw(); debRender();
   }, {passive: false});
-  
   let initialPinchDist = null, initialZoom = 1;
   pa.addEventListener('touchstart', e => {
       if(!S.img) return;
@@ -729,15 +712,12 @@ function setupRetinaCanvas() {
 function drawPreviewImage(imgData) {
   setupRetinaCanvas();
   const {pw, pm, sc} = getSc();
-  ctx.fillStyle = '#ffffff'; ctx.fillRect(0,0,pw*sc, pc.height/window.devicePixelRatio); // Fix for height
-  
+  ctx.fillStyle = '#ffffff'; ctx.fillRect(0,0,pw*sc, pc.height/window.devicePixelRatio);
   ctx.save();
   ctx.scale(sc, sc); 
   ctx.translate(pm, pm);
-  
   const pathScale = (pw - 2*pm) / S.cW;
   ctx.scale(pathScale, pathScale);
-  
   const t = document.createElement('canvas'); t.width = S.cW; t.height = S.cH;
   t.getContext('2d').putImageData(imgData, 0, 0);
   ctx.drawImage(t, 0, 0);
@@ -770,26 +750,19 @@ function updateStats() {
   if(!S.paths || S.paths.length === 0) return;
   const pm = S.paper.margin;
   const pathScale = (S.paper.w - 2*pm) / S.cW;
-  
   let totalPx = 0;
   S.paths.forEach(pathStr => {
     let lx=0, ly=0;
-    // Nagyon egyszerű távolság becslés reguláris kifejezéssel
     const commands = pathStr.match(/[ML]\s*(-?\d+\.?\d*)\s*,\s*(-?\d+\.?\d*)/g) || [];
     commands.forEach((cmd, i) => {
       const parts = cmd.match(/(-?\d+\.?\d*)/g);
-      const x = parseFloat(parts[0]);
-      const y = parseFloat(parts[1]);
+      const x = parseFloat(parts[0]); const y = parseFloat(parts[1]);
       if(i > 0) totalPx += Math.hypot(x-lx, y-ly);
       lx=x; ly=y;
     });
   });
-  
-  // Átszámítás valós milliméterre és méterre
   const lenMm = totalPx * pathScale;
   const lenM = (lenMm / 1000).toFixed(1);
-  
-  // Átlagos sebesség: 30 mm/s (plusz 0.5s minden tollfelemelésre)
   const penLifts = S.paths.length;
   const seconds = (lenMm / 30) + (penLifts * 0.5);
   const mins = Math.round(seconds / 60);
@@ -804,12 +777,16 @@ function updateStats() {
 // ── RENDER ALGORITMUSOK ──
 let _rTimer=null;
 function debRender(){
-  clearTimeout(_rTimer); _rTimer = setTimeout(runRender, 400); 
+  clearTimeout(_rTimer); 
+  // Pici késleltetés, hogy a mozgás/csúszka ne akadjon be
+  _rTimer = setTimeout(runRender, (S.algo==='tsp' || S.algo==='string') ? 600 : 300); 
 }
 
 function runRender(){
   if(!S.processed)return;
   sp.classList.remove('hidden');
+  
+  // Timeout engedi megrajzolni a töltőképernyőt (spinnert)
   setTimeout(()=>{
     try{
         S.paths=renderAlgo(S.processed,S.algo,S.params);
@@ -817,7 +794,7 @@ function runRender(){
     }
     catch(e){console.error(e);toast('Render hiba');}
     sp.classList.add('hidden');
-  },16);
+  }, 50);
 }
 
 function getGrayArray(id){
@@ -827,6 +804,29 @@ function getGrayArray(id){
   return{g,w,h};
 }
 function sgA(g,w,h,x,y){return g[Math.max(0,Math.min(h-1,y|0))*w+Math.max(0,Math.min(w-1,x|0))];}
+
+// Dithering motor a TSP-hez
+function applyFloydSteinberg(g, w, h) {
+  let errArr = new Float32Array(g);
+  let pts = [];
+  for (let y = 0; y < h; y++) {
+    for (let x = 0; x < w; x++) {
+      let idx = y * w + x;
+      let oldVal = errArr[idx];
+      let newVal = oldVal < 0.5 ? 0.0 : 1.0; // 0 = Fekete, 1 = Fehér
+      errArr[idx] = newVal;
+      
+      if (newVal === 0.0) pts.push({x, y});
+      
+      let err = oldVal - newVal;
+      if (x + 1 < w) errArr[idx + 1] += err * 7 / 16;
+      if (x - 1 >= 0 && y + 1 < h) errArr[idx + w - 1] += err * 3 / 16;
+      if (y + 1 < h) errArr[idx + w] += err * 5 / 16;
+      if (x + 1 < w && y + 1 < h) errArr[idx + w + 1] += err * 1 / 16;
+    }
+  }
+  return pts;
+}
 
 function renderAlgo(imgData,algo,params){
   const grayObj = getGrayArray(imgData);
@@ -839,7 +839,6 @@ function renderAlgo(imgData,algo,params){
   return[];
 }
 
-// 1. ZIG-ZAG SQUIGGLE ALGORITMUSOK (1 toll felemelés!)
 function sqH({g,w,h}, {lineCount,amplitude,frequency,sampling}){
   lineCount=Math.max(1,Math.round(lineCount));
   const spacing=h/lineCount; 
@@ -855,9 +854,6 @@ function sqH({g,w,h}, {lineCount,amplitude,frequency,sampling}){
     for(let x=startX; (isOdd ? x>=endX : x<=endX); x+=step){
       const br=sgA(g,w,h,x,y0)*255;
       const dark100 = (255 - br) / 2.55; 
-      // Ha visszafelé megyünk, a fázist negatív irányba tekerjük, hogy szép legyen a hullám
-      const phase = (isOdd ? -dark100 : dark100) / frequency; 
-      // A kumulatív fázist egy fix x alapú fázissal oldjuk meg, így visszafelé is ugyanazt a mintát adja:
       const a = (x / sampling) * (dark100 / frequency);
       const r = (dark100 / 100) * amplitude * spacing;
       
@@ -922,58 +918,62 @@ function sqSpiral({g,w,h}, {lineCount,amplitude,frequency,sampling}){
   return pts ? [pts] : [];
 }
 
-// 2. TSP STIPPLING (Egyvonalas Pintr algoritmus)
+// ÚJ: TSP (Egyvonalas) Floyd-Steinberg Dithering alapon
 function runTSP({g,w,h}, {pointCount}){
-  // 1. Pontok generálása a sötétség alapján (Rejection Sampling)
-  let pts = [];
-  const maxAttempts = pointCount * 100; // Biztonsági limit
-  for(let i=0; i<maxAttempts && pts.length<pointCount; i++){
-    let x = Math.random()*w; let y = Math.random()*h;
-    let darkness = 1.0 - sgA(g,w,h,x,y); // 0(fehér) - 1(fekete)
-    // Sötét helyen nagyobb eséllyel tartjuk meg a pontot
-    if(Math.random() < Math.pow(darkness, 1.5)) pts.push({x,y});
+  // 1. Dithering és pontok kinyerése
+  let allPts = applyFloydSteinberg(g, w, h);
+  
+  if(allPts.length === 0) return [];
+  
+  // 2. Pontok ritkítása (Véletlenszerű mintavételezés a megadott számra)
+  let unvisited = [];
+  if (allPts.length > pointCount) {
+    // Gyors keverés és vágás
+    for (let i = allPts.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [allPts[i], allPts[j]] = [allPts[j], allPts[i]];
+    }
+    unvisited = allPts.slice(0, pointCount);
+  } else {
+    unvisited = allPts;
   }
   
-  if(pts.length === 0) return [];
-  
-  // 2. Legközelebbi Szomszéd (Nearest Neighbor) a vonalhoz
-  let unvisited = [...pts];
+  // 3. Legközelebbi Szomszéd (Nearest Neighbor) Keresés
   let current = unvisited.pop();
   let pathStr = `M${current.x.toFixed(1)},${current.y.toFixed(1)}`;
   
   while(unvisited.length > 0){
     let nearestIdx = 0;
     let minDist = Infinity;
-    // Keresés (Optimalizálható KD-treevel, de böngészőben pár ezerig a nyers erő is kibírja)
+    
     for(let i=0; i<unvisited.length; i++){
       let p = unvisited[i];
-      let d = (p.x-current.x)*(p.x-current.x) + (p.y-current.y)*(p.y-current.y); // sqrt kihagyva a sebességért
+      // Távolság négyzet (sqrt felesleges és lassú)
+      let d = (p.x-current.x)*(p.x-current.x) + (p.y-current.y)*(p.y-current.y); 
       if(d < minDist){ minDist = d; nearestIdx = i; }
     }
+    
     current = unvisited[nearestIdx];
     pathStr += ` L${current.x.toFixed(1)},${current.y.toFixed(1)}`;
-    unvisited.splice(nearestIdx, 1); // Eltávolítjuk a meglátogatottat
+    unvisited.splice(nearestIdx, 1);
   }
   
   return [pathStr];
 }
 
-// 3. STRING ART (Fonal algoritmus)
+// ÚJ: STRING ART (Fonal algoritmus)
 function runString({g,w,h}, {pinCount, lineCount, weight}){
-  const maxR = Math.min(w,h) / 2 - 2; // Pici biztonsági ráhagyás a széleken
+  const maxR = Math.min(w,h) / 2 - 2; 
   const cx = w/2, cy = h/2;
   
-  // 1. Szegecsek (Pinek) legenerálása a kör peremén
   let pins = [];
   for(let i=0; i<pinCount; i++){
     const a = (i/pinCount) * Math.PI * 2;
     pins.push({ x: cx + Math.cos(a)*maxR, y: cy + Math.sin(a)*maxR });
   }
   
-  // 2. Szürkeárnyalatos memóriatömb klónozása (Mert roncsolni fogjuk!)
   let imgArray = new Float32Array(g);
   
-  // 3. Bresenham vonal pontjainak lekérése (Segédfüggvény)
   function getLinePixels(x0, y0, x1, y1) {
     let pxs = [];
     let dx = Math.abs(x1-x0), sx = x0<x1 ? 1 : -1;
@@ -991,16 +991,13 @@ function runString({g,w,h}, {pinCount, lineCount, weight}){
   
   let currentPin = 0;
   let pathStr = `M${pins[currentPin].x.toFixed(1)},${pins[currentPin].y.toFixed(1)}`;
-  const wMult = weight / 1000; // Normalizált kivonási súly
+  const wMult = weight / 1000; 
   
-  // 4. Fonal húzása vonalról vonalra
   for(let l=0; l<lineCount; l++){
     let bestPin = -1;
     let maxDarkness = -Infinity;
     let bestLinePxs = [];
     
-    // Végignézzük az összes lehetséges cél-szegecset
-    // Kihagyjuk a közvetlen szomszédokat (pl. min. 20 tű távolság)
     const minOffset = Math.max(10, Math.floor(pinCount * 0.05));
     for(let i = minOffset; i < pinCount - minOffset; i++){
       let nextPin = (currentPin + i) % pinCount;
@@ -1009,14 +1006,12 @@ function runString({g,w,h}, {pinCount, lineCount, weight}){
       let pxs = getLinePixels(Math.round(p1.x), Math.round(p1.y), Math.round(p2.x), Math.round(p2.y));
       let lineDarkness = 0;
       
-      // Összegezzük a sötétséget a vonalon
       for(let p of pxs){
         if(p.x>=0 && p.x<w && p.y>=0 && p.y<h) {
-          lineDarkness += 1.0 - imgArray[p.y * w + p.x]; // Sötétség: 1 - világosság
+          lineDarkness += 1.0 - imgArray[p.y * w + p.x]; 
         }
       }
       
-      // Átlagos sötétség
       let avgDarkness = lineDarkness / Math.max(pxs.length, 1);
       if(avgDarkness > maxDarkness){
         maxDarkness = avgDarkness;
@@ -1025,18 +1020,15 @@ function runString({g,w,h}, {pinCount, lineCount, weight}){
       }
     }
     
-    // Ha nem találtunk elég sötét vonalat, befejezzük hamarabb
     if(bestPin === -1 || maxDarkness < 0.05) break; 
     
-    // Vonal meghúzása
     let p = pins[bestPin];
     pathStr += ` L${p.x.toFixed(1)},${p.y.toFixed(1)}`;
     
-    // A felhasznált vonal "kivilágosítása" a képen, hogy legközelebb máshol keressen
     for(let px of bestLinePxs){
       if(px.x>=0 && px.x<w && px.y>=0 && px.y<h) {
         let idx = px.y * w + px.x;
-        imgArray[idx] = Math.min(1.0, imgArray[idx] + wMult); // Fehér felé toljuk
+        imgArray[idx] = Math.min(1.0, imgArray[idx] + wMult); 
       }
     }
     currentPin = bestPin;
